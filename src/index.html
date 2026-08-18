@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1C1A17">
+<!--@CSP@-->
+<meta name="description" content="日历 · 万年历 · 农历 · 二十四节气 · 中国法定节假日 · 全球天气与历史气候">
+<title>天时 Meridian · 日历天气</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!--@STYLES@-->
+</head>
+<body>
+<a class="skiplink" href="#mainContent">跳到主要内容</a>
+<div class="wrap">
+
+  <header class="top" role="banner">
+    <div class="brand"><span class="dot"></span><span id="brandName">天时 Meridian · 日历天气</span></div>
+    <div class="search">
+      <span class="ico">🔍</span>
+      <input id="q" type="search" placeholder="搜索全球城市（中文/英文，如：上海、Tokyo、Paris）"
+             autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"
+             aria-controls="sug" aria-label="搜索城市">
+      <div class="sug" id="sug" role="listbox" aria-label="搜索结果"></div>
+    </div>
+    <button class="tbtn" id="addFav">☆ 收藏当前</button>
+    <button class="tbtn" id="theme">◐ 主题</button>
+    <span class="langwrap">
+      <!-- 地球图标只是视觉锚点，真正的控件是它后面的 <select>。
+           aria-hidden 让屏幕阅读器跳过它，避免把装饰念出来。 -->
+      <span class="langico" aria-hidden="true">🌐</span>
+      <select class="tbtn langsel" id="langSel" title="语言 / Language" aria-label="语言 / Language"></select>
+    </span>
+  </header>
+
+  <div class="errbar" id="errbar" role="alert" aria-live="assertive"></div>
+  <nav class="favs" id="favs" aria-label="收藏地点"></nav>
+
+  <main class="grid" id="mainContent">
+    <div class="col-l">
+      <div class="card now" id="nowPanel"></div>
+
+      <div class="card sec" id="adviceSec">
+        <h3><span id="adviceTitle">穿衣与出行建议</span></h3>
+        <div id="adviceBody"><div class="empty">等待天气数据…</div></div>
+      </div>
+
+      <div class="card sec">
+        <h3><span id="calTitle">日历 · 万年历</span>
+          <span class="tabs" role="tablist" aria-label="日历视图">
+            <button data-v="day" role="tab">日</button><button data-v="week" role="tab">周</button><button data-v="month" class="act" role="tab" aria-selected="true">月</button><button data-v="year" role="tab">年</button>
+          </span>
+        </h3>
+        <div class="cnav">
+          <button class="nb" id="prev" aria-label="上一个">‹</button>
+          <div class="ttl" id="calTtl"></div>
+          <button class="today-b" id="todayB">今天</button>
+          <button class="nb" id="next" aria-label="下一个">›</button>
+        </div>
+        <div id="calBody"></div>
+        <div class="detail" id="detail"></div>
+      </div>
+
+      <div class="card sec">
+        <h3><span id="convTitle">阴阳历互转</span>
+          <select class="calsel" id="calSel" title="历法 / Calendar" aria-label="历法 / Calendar"></select>
+          <span class="tabs" id="convTabs">
+            <button data-c="s2l" class="act">公历 → 农历</button><button data-c="l2s">农历 → 公历</button>
+          </span>
+        </h3>
+        <div id="convBody"></div>
+      </div>
+    </div>
+
+    <div class="col-r">
+      <div class="card sec" id="wxSec">
+        <h3><span id="wxTitle">天气 · 未来 7 天</span><span id="wxPlace" class="h3sub"></span></h3>
+        <div id="intraSec">
+          <div class="intrahead"><span class="il" id="intraTitle">今明逐时</span><span class="ir" id="intraNote"></span></div>
+          <div id="intraBody"></div>
+        </div>
+        <div id="wxBody"><div class="empty"><span class="ld"></span> 加载天气中…</div></div>
+        <div class="srcbar" id="srcBar"></div>
+      </div>
+
+      <div class="card sec" id="srcSec">
+        <h3><span id="srcTitle">数据源</span><span class="h3sub" id="srcSub">凭据只存本机浏览器</span></h3>
+        <div id="srcBody"></div>
+      </div>
+
+      <div class="card sec">
+        <h3><span id="histTitle">历史天气</span>
+          <span class="tabs" id="histTabs">
+            <button data-h="one" class="act">某天</button><button data-h="range">区间</button><button data-h="cmp">历年同期</button>
+          </span>
+        </h3>
+        <div id="histCtrl"></div>
+        <div id="histBody"><div class="empty" id="histHint">选择日期后点查询</div></div>
+      </div>
+
+      <div class="card sec">
+        <h3 id="tzTitle">时区换算</h3>
+        <div class="tzrow">
+          <div class="tzf">
+            <div class="k" id="tzLabA">地点 A</div>
+            <select id="tzA"></select>
+            <input id="tzTimeA" type="datetime-local">
+            <div class="out" id="outA"></div>
+          </div>
+          <button class="swp" id="swap" title="交换两地" aria-label="交换两地">⇄</button>
+          <div class="tzf">
+            <div class="k" id="tzLabB">地点 B</div>
+            <select id="tzB"></select>
+            <input id="tzTimeB" type="datetime-local">
+            <div class="out" id="outB"></div>
+          </div>
+        </div>
+        <div class="diff" id="tzDiff"></div>
+      </div>
+
+      <div class="card sec">
+        <h3><span id="wcTitle">世界时钟</span><span class="h3sub" id="wcHint">点击切换 · ★ 设为主收藏</span></h3>
+        <div class="wc" id="wcList"></div>
+      </div>
+
+      <div class="card sec">
+        <h3><span id="holTitle">节日与假期</span>
+          <select class="calsel" id="holSel" title="节日地区" aria-label="节日地区"></select>
+          <span id="holYr" class="h3sub"></span></h3>
+        <div class="hl" id="holList"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot" id="foot" role="contentinfo"></footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<!--@SCRIPTS@-->
+</body>
+</html>

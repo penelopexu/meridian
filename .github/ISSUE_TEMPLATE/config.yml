@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 天气数据本身有问题？
+    url: https://open-meteo.com/
+    about: 温度、降水等数值来自 Open-Meteo，数据本身的问题请反馈给他们。本项目只负责展示。

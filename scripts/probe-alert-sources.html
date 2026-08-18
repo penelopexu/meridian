@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>预警数据源可用性探测 · 天时</title>
+<!--
+  这个页面回答一个问题：哪些公开预警接口，能被「没有服务端的静态网页」直接调用？
+
+  为什么需要它：天时是纯静态站点，所有请求都从访问者的浏览器发出。
+  浏览器会拦下所有没有 Access-Control-Allow-Origin 响应头的跨域请求——
+  这就是 CORS。接口免费、不要 key、数据再好，只要不发这个头，我们就用不了。
+
+  而 CORS 是浏览器行为，命令行工具（curl 等）根本不受它约束，所以在终端里
+  测出来「能通」是假象。只有真在浏览器里发一次请求才算数。
+
+  用法：双击本文件（file:// 打开），再点「用 HTTPS 页面测一遍」对比。
+  两种情况都要测，因为 file:// 和 https:// 的限制不一样。
+-->
+<style>
+  :root{ color-scheme: dark; --bg:#1C1A17; --bg2:#252220; --tx:#F2EFEA; --tx2:#B8B2A9;
+         --tx3:#857F76; --ok:#7FA07A; --no:#D46A4E; --warn:#E0A458; --line:#3A3531; }
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px;background:var(--bg);color:var(--tx);
+       font:14px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--tx2);margin-bottom:20px}
+  .ctx{background:var(--bg2);border:1px solid var(--line);border-radius:8px;
+       padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--tx2)}
+  .ctx b{color:var(--warn)}
+  button{background:var(--warn);color:#1C1A17;border:0;border-radius:6px;
+         padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;margin-right:8px}
+  button:disabled{opacity:.5;cursor:default}
+  table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--tx3);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .name{font-weight:600;white-space:nowrap}
+  .region{color:var(--tx3);font-size:12px;font-weight:400}
+  .url{color:var(--tx3);font-size:11px;font-family:ui-monospace,Consolas,monospace;
+       word-break:break-all;max-width:340px}
+  .st{font-weight:600;white-space:nowrap}
+  .st.ok{color:var(--ok)} .st.no{color:var(--no)} .st.wait{color:var(--tx3)}
+  .st.mixed{color:var(--warn)}
+  .note{color:var(--tx2);font-size:12px;max-width:380px}
+  .peek{color:var(--tx3);font-size:11px;font-family:ui-monospace,Consolas,monospace;
+        margin-top:5px;word-break:break-all;max-height:56px;overflow:hidden}
+  .sum{margin-top:22px;padding:14px;background:var(--bg2);border-radius:8px;
+       border:1px solid var(--line);white-space:pre-wrap;font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<h1>预警数据源可用性探测</h1>
+<div class="sub">测的不是「接口通不通」，而是「<b>静态网页能不能直接读到它的返回值</b>」。</div>
+
+<div class="ctx" id="ctx"></div>
+
+<button id="run">开始探测</button>
+<button id="copy" disabled>复制结果</button>
+<button id="dump">抓取样本</button>
+<div class="ctx" style="margin-top:14px">
+  <b>抓取样本</b>：把能通的接口的<b>完整返回值</b>存成一个文件下载下来。
+  台风网、印度气象局这些是非公开文档接口，没有真实样本就只能猜字段名，
+  猜错了写出来的解析代码是废的。
+</div>
+
+<table>
+  <thead><tr><th>数据源</th><th>接口</th><th>结果</th><th>说明</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<div class="sum" id="sum" hidden></div>
+
+<div id="dumpBox" hidden style="margin-top:22px">
+  <div class="ctx" id="dumpHint"></div>
+  <button id="dumpCopy">复制全部</button>
+  <textarea id="dumpText" readonly spellcheck="false"
+    style="width:100%;height:260px;margin-top:10px;background:var(--bg2);color:var(--tx2);
+           border:1px solid var(--line);border-radius:8px;padding:10px;
+           font:11px/1.5 ui-monospace,Consolas,monospace;resize:vertical"></textarea>
+</div>
+
+<script>
+/* 候选清单。region 只是分类，note 写的是「就算能用，还有什么坑」。 */
+const SOURCES = [
+  { name:'香港天文台 · 警告摘要', region:'香港', key:'hko-warnsum',
+    url:'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc',
+    note:'官方发布，含 8 號風球等熱帶氣旋警告。免费无 key。只覆盖香港。' },
+
+  { name:'香港天文台 · 警告详情', region:'香港', key:'hko-warninfo',
+    url:'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc',
+    note:'带完整警告正文。参数名文档里有 warninfo / warningInfo 两种写法，一并试。' },
+
+  { name:'香港天文台 · 警告详情(备用参数名)', region:'香港', key:'hko-warninfo2',
+    url:'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warninfo&lang=tc',
+    note:'同上，测另一种拼写。' },
+
+  { name:'香港天文台 · 实况天气', region:'香港', key:'hko-rhrread',
+    url:'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc',
+    note:'对照组。这个成功而警告接口失败，说明问题在参数不在 CORS。' },
+
+  { name:'美国国家气象局', region:'美国', key:'nws',
+    url:'https://api.weather.gov/alerts/active?point=40.7128,-74.0060',
+    note:'官方，GeoJSON，免费无 key。只覆盖美国。飓风警告在这里。' },
+
+  { name:'MeteoAlarm(欧洲)', region:'欧洲', key:'meteoalarm',
+    url:'https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-germany',
+    note:'欧洲各国气象局的 CAP 汇总。返回 Atom XML 不是 JSON，要自己解析。' },
+
+  { name:'日本气象厅 · 东京都警报', region:'日本', key:'jma',
+    url:'https://www.jma.go.jp/bosai/warning/data/warning/130000.json',
+    note:'非公开文档的内部接口，随时可能改。台风警报在这里。' },
+
+  { name:'中央气象台 · 预警列表(http)', region:'中国大陆', key:'nmc',
+    url:'http://www.nmc.cn/rest/findAlarm',
+    note:'已验证可用：返回全国上千条实时预警，精确到县级。但它是 http，' +
+         '从 https 页面调会被按混合内容拦掉 —— 所以下面那条 https 版本是关键。' },
+
+  { name:'中央气象台 · 预警列表(https)', region:'中国大陆', key:'nmc-https',
+    url:'https://www.nmc.cn/rest/findAlarm',
+    note:'★ 最关键的一条。这条要是能通，中国大陆就有了完整的官方预警覆盖 —— ' +
+         '不只台风，暴雨雷电冰雹山洪全都有。' },
+
+  { name:'中央气象台台风网 · 当年名录', region:'中国大陆', key:'typhoon-nmc',
+    url:'https://typhoon.nmc.cn/weatherservice/typhoon/jsons/list_' + new Date().getFullYear(),
+    note:'已验证可用，但**只有名录没有位置**：[id, 英文名, 中文名, 编号, …, 状态]。' +
+         '经纬度和风速要去下面的详情接口取。' },
+
+  { name:'中央气象台台风网 · 详情(结构未知)', region:'中国大陆', key:'typhoon-view',
+    /* 用一个已停编的台风（2026 年 17 号「浪卡」，内部 id 3302529）来探路：
+       它的历史数据还在，能让我们看清详情接口的字段结构，
+       不必等到真有台风来袭时才发现解析写错了。 */
+    url:'https://typhoon.nmc.cn/weatherservice/typhoon/jsons/view_2026_3302529',
+    note:'★ 用已停编的「浪卡」探路。台风的实时位置、风速、路径都在这里，' +
+         '但字段名还没核对过。这条的返回值决定了台风功能能不能真正跑起来。' },
+
+  { name:'WMO 全球恶劣天气', region:'全球', key:'wmo',
+    url:'https://severeweather.wmo.int/feed/rss.xml',
+    note:'世界气象组织汇总各国官方 CAP，覆盖面最广，但更新频率和延迟未知。' },
+
+  { name:'Open-Meteo(对照组)', region:'全球', key:'openmeteo',
+    url:'https://api.open-meteo.com/v1/forecast?latitude=22.3&longitude=114.2&current=temperature_2m',
+    note:'已知支持 CORS。它失败就说明是你的网络问题，不是接口问题。' },
+
+  /* ---- 第二轮：填补欧洲及其他地区的空白 ----
+     第一轮里 MeteoAlarm(欧洲) 和 WMO(全球) 都没有 CORS 头，
+     所以欧洲和大部分其他地区目前只能靠本地推算。下面是替代候选。 */
+
+  { name:'Bright Sky · 德国警报', region:'德国', key:'brightsky',
+    url:'https://api.brightsky.dev/alerts?lat=52.52&lon=13.405',
+    note:'开源项目，转发德国气象局(DWD)数据，官方声明允许任意来源跨域。最有希望的欧洲方案。' },
+
+  { name:'德国气象局 · 原始警报', region:'德国', key:'dwd',
+    url:'https://www.dwd.de/DWD/warnungen/warnapp/json/warnings.json',
+    note:'DWD 官方，但返回的是 JSONP 包裹（前后有函数名），要剥壳才能解析。' },
+
+  { name:'挪威气象局 · MetAlerts', region:'北欧', key:'metno',
+    url:'https://api.met.no/weatherapi/metalerts/2.0/current.json?lat=59.91&lon=10.75',
+    note:'免 key，但官方要求带自定义 User-Agent —— 浏览器不允许 JS 改这个头，可能因此被拒。' },
+
+  { name:'加拿大 GeoMet', region:'加拿大', key:'canada',
+    url:'https://api.weather.gc.ca/collections?f=json',
+    note:'先探根路径确认服务可达与跨域，通了再找具体的警报集合。' },
+
+  { name:'WMO Alert Hub', region:'全球', key:'alerthub',
+    url:'https://alert-hub.s3.amazonaws.com/rss/rss.xml',
+    note:'WMO 汇总各国官方 CAP。放在 S3 上，S3 通常允许跨域，比 severeweather.wmo.int 有希望。' },
+
+  { name:'印度气象局', region:'印度', key:'imd',
+    url:'https://mausam.imd.gov.in/api/warnings_district_api.php',
+    note:'非公开文档，稳定性未知。' },
+
+  { name:'澳大利亚气象局（不可用）', region:'澳洲', key:'bom',
+    url:'https://api.weather.bom.gov.au/v1/locations/r3gx2f/warnings',
+    note:'⚠ 技术上能通，但**法律上不能用**：返回值里明写 ' +
+         '"You must not use, copy or share it"。留在这里只作记录，不要接入。' }
+];
+
+const $ = s => document.querySelector(s);
+const rows = $('#rows');
+const results = {};
+
+/* 页面自身的运行环境会直接影响结论，先讲清楚 */
+(function describeContext(){
+  const p = location.protocol;
+  let msg;
+  if (p === 'file:') {
+    msg = '当前是用 <b>file://</b> 打开的。浏览器把本地文件当作「不透明来源」，' +
+          '几乎所有跨域请求都会被拒——<b>这里的失败不能说明接口有问题</b>。' +
+          '真正有意义的结论要在 https 页面上测：在项目目录跑 <b>npm run serve</b>，' +
+          '然后把这个文件拷到 dist/pwa/ 下用 http 访问。';
+  } else if (p === 'https:') {
+    msg = '当前是 <b>https</b>，这就是天时线上环境的真实条件，结论可以直接采信。' +
+          '注意：http 开头的接口会被当作混合内容拦掉，这也是真实限制。';
+  } else {
+    msg = '当前是 <b>http</b>。比 file:// 可信，但线上是 https，' +
+          '所以 http 接口在这里能过、上线后仍会被拦。';
+  }
+  $('#ctx').innerHTML = '运行环境：' + msg;
+})();
+
+function render(){
+  rows.innerHTML = SOURCES.map(s=>{
+    const r = results[s.key] || {status:'wait', label:'等待'};
+    return `<tr>
+      <td><div class="name">${s.name}</div><div class="region">${s.region}</div></td>
+      <td class="url">${s.url}</td>
+      <td class="st ${r.status}">${r.label}</td>
+      <td><div class="note">${s.note}</div>${r.peek?`<div class="peek">${r.peek}</div>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+render();
+
+/* 关键：区分「CORS 拦截」和「网络不通」。
+   fetch 在这两种情况下抛的都是 TypeError，信息一样，光看异常分不清。
+   办法是再用 mode:'no-cors' 发一次——这种模式下浏览器不做 CORS 检查，
+   只要网络能到达就会成功（返回一个读不到内容的 opaque 响应）。
+     no-cors 成功 + 普通请求失败  →  接口活着，但没给 CORS 头
+     两次都失败                  →  网络不通、域名被墙、或证书问题 */
+async function probe(s){
+  const t0 = performance.now();
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(()=>ctl.abort(), 12000);
+    const res = await fetch(s.url, {signal: ctl.signal});
+    clearTimeout(timer);
+    const text = await res.text();
+    const ms = Math.round(performance.now() - t0);
+    if (!res.ok) {
+      return {status:'no', label:`HTTP ${res.status}`,
+              peek:`接口拒绝了请求（但 CORS 是通的）· ${ms} ms`};
+    }
+    return {status:'ok', label:'✓ 可直接用',
+            peek:`${ms} ms · ${(text.length/1024).toFixed(1)} KB · ${text.slice(0,110).replace(/\s+/g,' ')}…`};
+  } catch (e) {
+    /* 混合内容：https 页面调 http 接口，浏览器直接掐掉，连 no-cors 都救不了 */
+    if (location.protocol === 'https:' && s.url.startsWith('http://')) {
+      return {status:'mixed', label:'✗ 混合内容',
+              peek:'https 页面不允许请求 http 接口。除非对方支持 https，否则无解。'};
+    }
+    try {
+      await fetch(s.url, {mode:'no-cors'});
+      return {status:'no', label:'✗ 无 CORS 头',
+              peek:'服务器在线且能连通，但没有发 Access-Control-Allow-Origin，浏览器不让读返回值。'};
+    } catch (e2) {
+      return {status:'no', label:'✗ 连不上',
+              peek:`网络层就失败了：${e.message}。可能是被墙、超时或证书问题。`};
+    }
+  }
+}
+
+$('#run').onclick = async () => {
+  $('#run').disabled = true;
+  $('#run').textContent = '探测中…';
+  $('#sum').hidden = true;
+  for (const s of SOURCES) {
+    results[s.key] = {status:'wait', label:'请求中…'};
+    render();
+    results[s.key] = await probe(s);
+    render();
+  }
+  $('#run').disabled = false;
+  $('#run').textContent = '重新探测';
+  $('#copy').disabled = false;
+
+  const usable = SOURCES.filter(s=>results[s.key].status==='ok');
+  const blocked = SOURCES.filter(s=>results[s.key].status!=='ok');
+  $('#sum').hidden = false;
+  $('#sum').textContent =
+    `运行环境：${location.protocol}//${location.host || '(本地文件)'}\n` +
+    `探测时间：${new Date().toLocaleString('zh-CN')}\n\n` +
+    `可直接接入（${usable.length}）：\n` +
+    (usable.map(s=>`  ✓ ${s.name}`).join('\n') || '  （无）') + '\n\n' +
+    `不可用（${blocked.length}）：\n` +
+    (blocked.map(s=>`  ✗ ${s.name} —— ${results[s.key].label}`).join('\n') || '  （无）');
+};
+
+$('#copy').onclick = () => {
+  navigator.clipboard.writeText($('#sum').textContent)
+    .then(()=>{ $('#copy').textContent='已复制'; setTimeout(()=>$('#copy').textContent='复制结果',1500); });
+};
+
+/* 把完整返回值存下来。截断到 200 KB 是因为有些接口会返回整个国家的数据，
+   而我们只需要看清字段结构，不需要全量。
+
+   下载不一定成功：file:// 页面触发的 blob 下载，部分浏览器会静默拦掉。
+   所以结果同时渲染到页面上的文本框里 —— 下载失败也能直接复制走。 */
+$('#dump').onclick = async () => {
+  $('#dump').disabled = true;
+  $('#run').disabled = true;
+  const out = {
+    _探测环境: location.protocol + '//' + (location.host || '(本地文件)'),
+    _抓取时间: new Date().toISOString(),
+    _说明: '每项要么带「内容」（完整返回值），要么带「失败」（原因）。'
+  };
+  let done = 0;
+  for (const s of SOURCES) {
+    $('#dump').textContent = `抓取中 ${++done}/${SOURCES.length}…`;
+    /* 同步更新表格，否则看上去像卡死了 */
+    results[s.key] = {status:'wait', label:'抓取中…'};
+    render();
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(()=>ctl.abort(), 15000);
+      const res = await fetch(s.url, {signal: ctl.signal});
+      clearTimeout(timer);
+      const text = await res.text();
+      out[s.key] = {
+        名称: s.name, 地址: s.url, 状态码: res.status,
+        内容类型: res.headers.get('content-type') || '',
+        字节数: text.length,
+        内容: text.length > 200000 ? text.slice(0, 200000) + '\n…(已截断)' : text
+      };
+      results[s.key] = {status:'ok', label:'✓ 已取到',
+                        peek:`${(text.length/1024).toFixed(1)} KB · ${text.slice(0,110).replace(/\s+/g,' ')}…`};
+    } catch (e) {
+      const why = String(e && e.message || e);
+      out[s.key] = {名称: s.name, 地址: s.url, 失败: why};
+      results[s.key] = {status:'no', label:'✗ 取不到', peek: why};
+    }
+    render();
+  }
+
+  const json = JSON.stringify(out, null, 1);
+  const fname = '预警源样本-' + new Date().toISOString().slice(0,10) + '.json';
+
+  /* 先试下载 */
+  let downloaded = false;
+  try {
+    const blob = new Blob([json], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    downloaded = true;
+  } catch (e) { downloaded = false; }
+
+  /* 无论下载成没成，都把内容摆到页面上 */
+  $('#dumpBox').hidden = false;
+  $('#dumpText').value = json;
+  $('#dumpHint').innerHTML = downloaded
+    ? `已尝试下载 <b>${fname}</b>（在浏览器的下载文件夹里）。` +
+      `如果没找到，说明被浏览器拦了 —— 直接用下面的「复制全部」即可，效果一样。`
+    : `下载被浏览器阻止了。用下面的「复制全部」把内容拷走。`;
+
+  $('#dump').disabled = false;
+  $('#run').disabled = false;
+  $('#dump').textContent = '重新抓取样本';
+};
+
+$('#dumpCopy').onclick = () => {
+  const el = $('#dumpText');
+  el.select();
+  navigator.clipboard.writeText(el.value)
+    .then(()=>{ $('#dumpCopy').textContent = '已复制'; setTimeout(()=>$('#dumpCopy').textContent='复制全部',1500); })
+    .catch(()=>{ document.execCommand('copy'); $('#dumpCopy').textContent = '已复制'; });
+};
+</script>
+</body>
+</html>

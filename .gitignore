@@ -1,0 +1,24 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# 构建产物：CI 会自动生成，不入库
+dist/
+
+# 密钥类文件绝不入库（本项目当前不需要任何 key，保险起见预置）
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+
+# 开发期的临时调试脚本，不属于项目的一部分。
+# 这三个是调试地名搜索和早期多语言基线时留下的，可以直接删掉。
+/runs.js
+/s.js
+/scripts/_baseline-i18n.js.txt
+/scripts/*.tmp
+
+# 界面快照的完整 HTML 导出（npm run test:ui -- --dump 产生，只用于本地 diff）
+/dist/ui-dump.json

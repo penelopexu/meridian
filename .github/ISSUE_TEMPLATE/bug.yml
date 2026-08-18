@@ -1,0 +1,59 @@
+name: 报告问题 / Bug report
+description: 界面出错、数据显示不对、功能失效
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。**如果是天气数据加载不出来**，请先打开 `网络诊断.html`（仓库根目录构建产物里有），它会告诉你是网络问题还是程序问题。
+
+  - type: textarea
+    id: what
+    attributes:
+      label: 出了什么问题
+      description: 你看到的现象。截图很有帮助。
+    validations: { required: true }
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 怎么复现
+      placeholder: |
+        1. 搜索「惠阳」
+        2. 切换到年视图
+        3. 点击 8 月
+    validations: { required: true }
+
+  - type: input
+    id: version
+    attributes:
+      label: 用的哪个版本
+      description: 单文件版看 HTML 顶部注释；在线版看页脚。
+    validations: { required: true }
+
+  - type: dropdown
+    id: form
+    attributes:
+      label: 使用形态
+      options: [单文件 HTML（双击打开）, 在线版 / PWA, 自己构建的]
+    validations: { required: true }
+
+  - type: input
+    id: env
+    attributes:
+      label: 浏览器与系统
+      placeholder: Chrome 130 / Windows 11
+    validations: { required: true }
+
+  - type: input
+    id: lang
+    attributes:
+      label: 界面语言与历法
+      placeholder: 简体中文 + 农历
+
+  - type: textarea
+    id: console
+    attributes:
+      label: 控制台报错（可选）
+      description: 按 F12 打开控制台，把红色报错贴这里。
+      render: text

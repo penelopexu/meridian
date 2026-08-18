@@ -1,0 +1,50 @@
+# Cloudflare Pages / Netlify 的响应头配置。
+# 构建时原样拷进 dist/pwa/，平台会自动识别这个文件名。
+# GitHub Pages 不支持自定义响应头，所以页面里那份 <meta> CSP 不能删——
+# 两边是互为备份的关系，不是重复。
+
+/*
+  # 禁止浏览器"猜"文件类型。没有它，一个被当成 HTML 解析的 .json 就能变成 XSS。
+  X-Content-Type-Options: nosniff
+
+  # 不把本站网址泄露给天气接口。这个站没有任何需要 referrer 的场景。
+  Referrer-Policy: no-referrer
+
+  # 不允许被别人 iframe 嵌套（防点击劫持）。与 CSP 的 frame-ancestors 重复是故意的：
+  # 老浏览器只认这个头。
+  X-Frame-Options: DENY
+
+  # 这个站不用摄像头、麦克风、定位、支付、传感器中的任何一个，全部关掉。
+  # 万一将来引入第三方脚本，它也拿不到这些权限。
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), screen-wake-lock=(), usb=(), xr-spatial-tracking=()
+
+  # 一年内强制走 HTTPS。preload 先不加——加了要提交到浏览器预载名单，撤销很麻烦。
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+  # 与页面内 <meta> 那份保持一致。响应头版本优先级更高，也更难被绕过。
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src https://api.open-meteo.com https://geocoding-api.open-meteo.com https://air-quality-api.open-meteo.com https://archive-api.open-meteo.com https://*.qweatherapi.com https://data.weather.gov.hk https://api.weather.gov https://typhoon.nmc.cn https://www.nmc.cn https://api.brightsky.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+
+# Service Worker 必须每次都回源校验。
+# 如果它被 CDN 缓存住，用户会永远卡在旧版本上——这是 PWA 最经典的翻车方式。
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+  Service-Worker-Allowed: /
+
+# 首页同理：它是所有更新的入口。
+/
+  Cache-Control: no-cache, must-revalidate
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
+# app.js 和 app.css 的文件名后面带 ?v=构建号，内容一变链接就变，
+# 所以可以放心让浏览器长期缓存。
+/app.js
+  Cache-Control: public, max-age=31536000, immutable
+/app.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=2592000
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=86400

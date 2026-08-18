@@ -1,0 +1,679 @@
+:root{
+  /* 告诉浏览器用深色渲染原生控件。
+     <select> 的下拉弹层、<input type=date> 的日历面板都是操作系统画的，
+     CSS 管不到内部，只有 color-scheme 能切换它们的明暗。 */
+  color-scheme: dark;
+
+  /* ===== 蓝调时刻 Blue Hour（暗色）=====
+     日落之后、天光未尽的那段时间：天空压成深蓝，地平线还留着一线暖光。
+     所以底色是冷的深蓝，强调色是那点残存的琥珀暖光 —— 冷底暖点，
+     两者的对比正是这个时刻好看的原因。
+     全部文字色对 --bg 已验算达到 WCAG AA 及以上（见 scripts/offline-test.mjs）。 */
+  --bg:#101623; --bg2:#18202F;
+  --card:rgba(233,237,245,.055); --card2:rgba(233,237,245,.03);
+  --line:rgba(127,169,220,.20); --line2:rgba(127,169,220,.11);
+  --tx:#E9EDF5; --tx2:#A9B4C7; --tx3:#78849A;
+  --acc:#E9A96B; --acc2:#7FA9DC; --warm:#C6D3E8;
+  --rest:#E58E63; --work:#7C8798; --green:#77A594; --red:#DE7264;
+
+  /* 语义别名：图表与图标引用这些，换主题时自动跟随。
+     注意 --cream 是「正文色」不是「米白色」—— 暗色主题下它是浅的，
+     亮色主题下它是深的。所以 .clock / .wtemp 这类大字直接用 --cream 即可，
+     不要再为亮色主题写覆盖规则（早先写过，把大字改成了背景色，等于看不见）。
+     --night 则是「与 --acc 相对的那一端」，只用于强调色按钮上的文字。
+
+     约定：**所有大号数字一律用 --cream**（时钟、温度、体感、日视图的日号、
+     换算结果）。早先日视图的日号用的是 oat→golden→caramel 渐变，
+     在亮色主题下这三个值恰好都落在玫瑰色系，跟旁边的深色大字撞不到一块去。 */
+  --cream:#E9EDF5; --oat:#C6D3E8; --golden:#E9A96B;
+  --caramel:#7FA9DC; --bark:#7C8798; --night:#101623; --moss:#77A594;
+
+  /* 图表与图标专用色 */
+  --chart-band:rgba(127,169,220,.20); --chart-rain:rgba(119,165,148,.50);
+  --ico-sun:#EFBC84; --ico-cloud:#AEBACE; --ico-cloud2:#7E8CA4;
+  --daybar-night:#1A2230;
+
+  --shadow:0 10px 34px rgba(4,7,14,.55);
+  --r:16px;
+  /* 背景光晕：一层压得很低的暖光（地平线余晖）+ 几层冷蓝 */
+  --orbs:
+    radial-gradient(820px 380px at 50% 108%, rgba(233,169,107,.15), transparent 64%),
+    radial-gradient(760px 540px at 8% -8%, rgba(127,169,220,.16), transparent 62%),
+    radial-gradient(640px 430px at 92% 2%, rgba(90,130,190,.14), transparent 60%),
+    radial-gradient(520px 480px at 76% 74%, rgba(119,165,148,.07), transparent 62%),
+    linear-gradient(170deg,#101623 0%,#18202F 52%,#0D1220 100%);
+}
+
+html[data-theme="light"]{
+  color-scheme: light;
+
+  /* ===== 玫瑰黎明 Rosy Dawn（亮色）=====
+     荷马反复用的那个词：ῥοδοδάκτυλος Ἠώς，玫瑰色手指的黎明。
+     底色是天亮前那种被染红的乳白，强调色是玫瑰色本身。
+     和蓝调时刻正好是一天的两端。 */
+  --bg:#FDF7F4; --bg2:#F6E9E3;
+  --card:rgba(255,255,255,.80); --card2:rgba(255,255,255,.55);
+  --line:rgba(168,69,94,.18); --line2:rgba(168,69,94,.10);
+  --tx:#332327; --tx2:#655054; --tx3:#7D666B;
+  --acc:#A8455E; --acc2:#B35F3C; --warm:#8C4A5C;
+  --rest:#AE4A4A; --work:#7B6A6D; --green:#4F7A63; --red:#B03E3E;
+
+  --cream:#332327; --oat:#655054; --golden:#A8455E;
+  --caramel:#B35F3C; --bark:#7B6A6D; --night:#FDF7F4; --moss:#4F7A63;
+
+  --chart-band:rgba(168,69,94,.15); --chart-rain:rgba(79,122,99,.45);
+  --ico-sun:#C97A4E; --ico-cloud:#A08B8F; --ico-cloud2:#7D666B;
+  --daybar-night:#C9B4B4;
+
+  --shadow:0 10px 30px rgba(120,80,90,.13);
+  --orbs:
+    radial-gradient(820px 400px at 50% 106%, rgba(232,168,150,.30), transparent 64%),
+    radial-gradient(760px 520px at 8% -8%, rgba(233,150,170,.26), transparent 62%),
+    radial-gradient(620px 420px at 92% 0%, rgba(240,180,140,.22), transparent 60%),
+    linear-gradient(170deg,#FDF7F4 0%,#FAEFEA 52%,#FDF7F4 100%);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'PJS',-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+  background:var(--bg); background-image:var(--orbs); background-attachment:fixed;
+  color:var(--tx); min-height:100vh; padding:18px; font-size:14px; letter-spacing:.1px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1280px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(16px);box-shadow:var(--shadow)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+
+/* ---- 顶栏 ---- */
+.top{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;letter-spacing:1.4px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,var(--golden),var(--caramel));box-shadow:0 0 14px rgba(212,165,116,.75)}
+.search{position:relative;flex:1;min-width:220px;max-width:400px}
+.search input{width:100%;padding:10px 14px 10px 36px;border-radius:11px;background:var(--card);border:1px solid var(--line);outline:none}
+.search input::placeholder{color:var(--tx3)}
+.search input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(212,165,116,.14)}
+.search .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55}
+.sug{position:absolute;top:46px;left:0;right:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden;z-index:60;box-shadow:var(--shadow);max-height:320px;overflow-y:auto;display:none}
+.sug.on{display:block}
+.sug div{padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--line2);font-size:13px}
+.sug div:hover{background:var(--card)}
+.sug .sub{color:var(--tx3);font-size:11px;margin-top:2px}
+.tbtn{padding:9px 13px;border-radius:11px;background:var(--card);border:1px solid var(--line);font-size:13px;transition:.15s}
+.tbtn:hover{border-color:var(--acc);color:var(--acc)}
+
+/* ---- 收藏条 ---- */
+.favs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.fav{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:12.5px;transition:.15s;cursor:pointer}
+.fav:hover{border-color:var(--acc)}
+.fav.act{border-color:var(--acc);background:rgba(212,165,116,.16)}
+.fav .t{color:var(--tx3);font-variant-numeric:tabular-nums;font-size:11.5px}
+.fav .st{color:var(--golden);font-size:11px}
+.fav .x{color:var(--tx3);font-size:14px;line-height:1;padding:0 2px}
+.fav .x:hover{color:var(--red)}
+
+/* ---- 布局 ---- */
+.grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+.sec{padding:18px;margin-bottom:16px}
+.sec h3{font-size:11px;font-weight:600;color:var(--tx3);letter-spacing:1.9px;text-transform:uppercase;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+/* ---- 现在面板 ---- */
+.now{padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+.now::after{content:'';position:absolute;right:-70px;top:-70px;width:270px;height:270px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,165,116,.26),transparent 70%);pointer-events:none}
+.now .place{font-size:13px;color:var(--tx2);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.pin{padding:2px 8px;border-radius:6px;background:rgba(212,165,116,.20);color:var(--golden);font-size:10.5px;font-weight:600;letter-spacing:.6px}
+.clock{font-size:62px;font-weight:600;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1.02;margin:8px 0 4px;color:var(--cream)}
+.clock .s{font-size:26px;color:var(--tx3);font-weight:400;letter-spacing:0}
+.clock .ap{font-size:16px;color:var(--tx2);margin-left:10px;font-weight:400;letter-spacing:1px}
+.dline{font-size:14px;color:var(--tx2);margin-bottom:4px}
+.lline{font-size:13px;color:var(--warm)}
+.sysrow{margin-top:13px;padding-top:13px;border-top:1px solid var(--line2);display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--tx3)}
+.sysrow b{color:var(--tx2);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ---- 天气 ---- */
+.wnow{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:17px;padding-top:17px;border-top:1px solid var(--line2)}
+.wtemp{font-size:54px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;color:var(--cream)}
+.wdesc{font-size:15px;margin-bottom:3px}
+.wfeel{font-size:12px;color:var(--tx3)}
+.wmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;flex:1;min-width:220px}
+.wm{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:9px 11px}
+.wm .k{font-size:10.5px;color:var(--tx3);margin-bottom:3px;letter-spacing:.4px}
+.wm .v{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+
+.tmr{display:flex;gap:14px;align-items:center;
+  background:linear-gradient(100deg,rgba(212,165,116,.17),rgba(184,122,74,.07));
+  border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-bottom:14px}
+.tmr .lab{font-size:10.5px;color:var(--acc);font-weight:600;letter-spacing:1.6px;margin-bottom:5px;text-transform:uppercase}
+.tmr .d{font-size:14px;margin-bottom:3px}
+.tmr .t{font-size:12px;color:var(--tx3)}
+.tmr .tt{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;margin-left:auto;text-align:right}
+.tmr .tt small{font-size:14px;color:var(--tx3);font-weight:400}
+
+.fc{display:flex;flex-direction:column;gap:2px}
+.fcr{display:grid;grid-template-columns:74px 40px 1fr 132px;gap:10px;align-items:center;padding:9px 8px;border-radius:9px;transition:.15s}
+.fcr:hover{background:var(--card2)}
+.fcr .day{font-size:12.5px}
+.fcr .day small{display:block;color:var(--tx3);font-size:10.5px;margin-top:1px}
+.fcr .cond{font-size:11.5px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fcr .cond em{font-style:normal;color:var(--acc);margin-left:6px;font-size:10.5px}
+.bar{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;font-size:12px}
+.bar .lo{color:var(--tx3);width:30px;text-align:right}
+.bar .hi{width:30px;font-weight:600}
+.track{flex:1;height:5px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+.fill{position:absolute;height:100%;border-radius:3px;background:linear-gradient(90deg,#8A9E82,#D4A574 55%,#B87A4A)}
+
+/* ---- 日历 ---- */
+.tabs{display:flex;gap:4px;background:var(--card2);padding:3px;border-radius:10px}
+.tabs button{padding:6px 15px;border-radius:8px;font-size:12.5px;color:var(--tx3);transition:.15s;letter-spacing:.5px}
+.tabs button.act{background:var(--acc);color:var(--night);font-weight:700}
+.cnav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cnav .ttl{font-size:19px;font-weight:600;flex:1;letter-spacing:.3px}
+.cnav .ttl small{font-size:12px;color:var(--tx3);font-weight:400;margin-left:8px;letter-spacing:0}
+.nb{width:30px;height:30px;border-radius:9px;background:var(--card2);border:1px solid var(--line2);display:grid;place-items:center;font-size:15px;color:var(--tx2)}
+.nb:hover{border-color:var(--acc);color:var(--acc)}
+.today-b{padding:6px 12px;border-radius:9px;background:var(--card2);border:1px solid var(--line2);font-size:12px}
+.today-b:hover{border-color:var(--acc);color:var(--acc)}
+
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:5px}
+.wk div{text-align:center;font-size:11px;color:var(--tx3);padding:5px 0;font-weight:600;letter-spacing:.8px}
+.wk div:nth-child(6),.wk div:nth-child(7){color:var(--rest)}
+.mg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cell{aspect-ratio:1/.93;border-radius:10px;padding:5px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;border:1px solid transparent;transition:.12s;min-height:56px}
+.cell:hover{background:var(--card2);border-color:var(--line)}
+.cell.out{opacity:.26}
+.cell.sel{border-color:var(--acc);background:rgba(212,165,116,.17)}
+.cell.today .d{color:var(--acc);font-weight:800}
+.cell.today::before{content:'';position:absolute;top:5px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--acc)}
+.cell .d{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.cell .l{font-size:9.5px;color:var(--tx3);margin-top:1px;line-height:1.2;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 1px}
+.cell .l.fes{color:var(--golden);font-weight:600}
+html[data-theme="light"] .cell .l.fes{color:var(--caramel)}
+.cell .l.trm{color:var(--green);font-weight:600}
+.cell.wknd .d{color:var(--rest)}
+.cell .tag{position:absolute;top:3px;right:4px;font-size:8.5px;font-weight:700;padding:1px 3px;border-radius:4px;line-height:1.3}
+.tag.rest{background:rgba(217,143,91,.24);color:var(--rest)}
+.tag.work{background:rgba(143,122,94,.26);color:var(--work)}
+.cell .wx{position:absolute;bottom:3px;right:4px;opacity:.9}
+
+/* 周视图 */
+.wv{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wvc{border-radius:11px;border:1px solid var(--line2);background:var(--card2);padding:10px 5px;text-align:center;cursor:pointer;transition:.12s;position:relative}
+.wvc:hover{border-color:var(--line)}
+.wvc.sel{border-color:var(--acc);background:rgba(212,165,116,.15)}
+.wvc .w{font-size:10.5px;color:var(--tx3)}
+.wvc .d{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin:3px 0}
+.wvc .l{font-size:9.5px;color:var(--tx3);min-height:12px}
+.wvc .l.fes{color:var(--golden);font-weight:600}
+html[data-theme="light"] .wvc .l.fes{color:var(--caramel)}
+.wvc .tp{font-size:11px;margin-top:6px;font-variant-numeric:tabular-nums}
+.wvc .tp b{font-weight:600}
+.wvc .tp span{color:var(--tx3)}
+
+/* 日视图 */
+.dv{text-align:center;padding:16px 0}
+.dv .big{font-size:84px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-2px;
+  color:var(--cream)}
+.dv .w{font-size:14px;color:var(--tx2);margin-top:8px;letter-spacing:.8px}
+.dv .l{font-size:16px;color:var(--warm);margin-top:9px}
+.dv .gz{font-size:12px;color:var(--tx3);margin-top:5px}
+.chips{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.chip{padding:5px 12px;border-radius:20px;font-size:11.5px;border:1px solid var(--line)}
+.chip.fes{background:rgba(212,165,116,.16);color:var(--golden);border-color:rgba(212,165,116,.34)}
+html[data-theme="light"] .chip.fes{color:#9C6435}
+.chip.trm{background:rgba(138,158,130,.17);color:var(--green);border-color:rgba(138,158,130,.34)}
+.chip.rest{background:rgba(217,143,91,.17);color:var(--rest);border-color:rgba(217,143,91,.34)}
+.chip.work{background:rgba(143,122,94,.18);color:var(--work)}
+.chip.intl{background:rgba(184,122,74,.16);color:var(--caramel);border-color:rgba(184,122,74,.32)}
+html[data-theme="light"] .chip.intl{color:#8A5530}
+.dvstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px;margin-top:16px}
+.dvstat .b{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:9px}
+.dvstat .b .k{font-size:10px;color:var(--tx3)}
+.dvstat .b .v{font-size:13px;font-weight:600;margin-top:3px}
+
+/* ---- 详情 ---- */
+.detail{border-top:1px solid var(--line2);margin-top:14px;padding-top:14px}
+.dt{font-size:13.5px;font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.dt .sm{font-size:11.5px;color:var(--tx3);font-weight:400}
+
+/* ---- 时区换算 ---- */
+.tzrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end}
+@media(max-width:560px){.tzrow{grid-template-columns:1fr}}
+.tzf{background:var(--card2);border:1px solid var(--line2);border-radius:11px;padding:11px}
+.tzf .k{font-size:10.5px;color:var(--tx3);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
+.tzf select,.tzf input{width:100%;padding:7px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);outline:none;font-size:12.5px;color:var(--tx)}
+.tzf .out{font-size:23px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
+.tzf .out small{font-size:11px;color:var(--tx3);display:block;margin-top:3px;font-weight:400}
+.swp{width:34px;height:34px;border-radius:10px;background:var(--card2);border:1px solid var(--line2);display:grid;place-items:center;margin-bottom:6px;font-size:15px}
+.swp:hover{border-color:var(--acc);color:var(--acc)}
+.diff{text-align:center;margin-top:11px;font-size:12px;color:var(--tx2);padding:9px;background:var(--card2);border-radius:10px;border:1px solid var(--line2)}
+.diff b{color:var(--acc);font-weight:700}
+
+/* ---- 世界时钟 ---- */
+.wc{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+.wcc{background:var(--card2);border:1px solid var(--line2);border-radius:11px;padding:11px;cursor:pointer;transition:.12s;position:relative;overflow:hidden}
+.wcc:hover{border-color:var(--acc)}
+.wcc.pri{border-color:rgba(212,165,116,.45)}
+.wcc .n{font-size:12.5px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wcc .c{font-size:10px;color:var(--tx3);margin-bottom:6px}
+.wcc .t{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.wcc .t small{font-size:11px;color:var(--tx3);font-weight:400}
+.wcc .dd{font-size:10px;color:var(--tx3);margin-top:3px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.wcc .star{position:absolute;top:8px;right:9px;font-size:12px;opacity:.35}
+.wcc .star:hover,.wcc.pri .star{opacity:1;color:var(--golden)}
+.nightbar{height:3px;border-radius:2px;margin-top:8px;background:var(--line)}
+
+/* ---- 节日列表 ---- */
+.hl{display:flex;flex-direction:column;gap:2px;max-height:340px;overflow-y:auto;padding-right:4px}
+.hli{display:flex;gap:11px;align-items:center;padding:8px;border-radius:9px;transition:.12s;cursor:pointer}
+.hli:hover{background:var(--card2)}
+.hli .dt2{width:52px;text-align:center;flex-shrink:0}
+.hli .dt2 .m{font-size:9.5px;color:var(--tx3)}
+.hli .dt2 .d{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.hli .nm{flex:1;font-size:12.5px;min-width:0}
+.hli .nm small{display:block;color:var(--tx3);font-size:10.5px;margin-top:1px}
+.hli .cd{font-size:10.5px;color:var(--tx3);flex-shrink:0;text-align:right}
+.hli .cd b{color:var(--acc);font-weight:700;font-size:12px}
+.hli.past{opacity:.38}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-thumb{background:rgba(212,165,116,.28);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(212,165,116,.45)}
+::-webkit-scrollbar-track{background:transparent}
+.empty{text-align:center;color:var(--tx3);font-size:12px;padding:26px 0}
+.ld{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.foot{text-align:center;color:var(--tx3);font-size:11px;padding:16px 0 6px;line-height:1.9}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid var(--line);padding:10px 18px;border-radius:11px;font-size:13px;box-shadow:var(--shadow);opacity:0;transition:.28s;z-index:99;pointer-events:none}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+
+.errbar{display:none;background:rgba(196,100,60,.15);border:1px solid rgba(196,100,60,.42);color:#E8A183;
+  border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.7;word-break:break-word}
+html[data-theme="light"] .errbar{color:#8F4020}
+.errbar b{color:var(--red)}
+.errbar button{margin-left:8px;padding:4px 11px;border-radius:8px;background:rgba(196,100,60,.22);border:1px solid rgba(196,100,60,.42);font-size:11.5px;color:inherit}
+.errbar button:hover{background:rgba(196,100,60,.34)}
+.wxerr{text-align:center;padding:18px 10px;color:var(--tx2);font-size:12.5px;line-height:1.9}
+.wxerr .m{color:#E8A183;font-size:11.5px;word-break:break-all;margin:5px 0 10px}
+html[data-theme="light"] .wxerr .m{color:#8F4020}
+.wxerr button{padding:7px 18px;border-radius:9px;background:var(--acc);color:var(--night);font-size:12.5px;font-weight:700}
+/* ================= v2 新增 ================= */
+.h3sub{font-size:10.5px;color:var(--tx3);text-transform:none;letter-spacing:0;font-weight:400}
+select.tbtn{padding:9px 26px 9px 12px;appearance:none;-webkit-appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23CDB795' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center}
+html[data-theme="light"] select.tbtn{
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%237A5A3A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+/* 下拉展开后的选项：Windows/Linux 的 Chromium 认这两条，macOS 由 color-scheme 接管 */
+select option{background:var(--bg2);color:var(--tx)}
+select option:checked{background:var(--acc);color:var(--night)}
+/* 日期/时间输入框里的小日历图标默认是深色的，深色主题下几乎看不见 */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator{
+  filter:invert(78%) sepia(18%) saturate(420%) hue-rotate(2deg) brightness(92%);
+  cursor:pointer;opacity:.75}
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator{opacity:1}
+html[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator,
+html[data-theme="light"] input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:none}
+
+/* 穿衣建议 */
+.advhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px;
+  padding-bottom:12px;border-bottom:1px solid var(--line2)}
+.advat .n{font-size:38px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--cream)}
+.advat small{font-size:11px;color:var(--tx3);margin-left:6px}
+.advband{font-size:15px;font-weight:600;color:var(--acc);padding:3px 12px;border-radius:20px;
+  background:rgba(212,165,116,.15);border:1px solid rgba(212,165,116,.32)}
+.advswing{font-size:11.5px;color:var(--tx3);margin-left:auto}
+.advrow{display:flex;gap:12px;padding:7px 0;font-size:12.5px;align-items:flex-start}
+.advrow .lb{flex-shrink:0;width:38px;color:var(--tx3);font-size:11px;letter-spacing:1px;padding-top:2px}
+.advrow .vl{flex:1;line-height:1.75;min-width:0}
+.acc{display:inline-block;padding:3px 10px;margin:2px 5px 2px 0;border-radius:16px;font-size:11.5px;
+  background:var(--card2);border:1px solid var(--line2)}
+.advnotes{margin:0;padding-left:16px}
+.advnotes li{margin:3px 0;color:var(--tx2)}
+
+/* 转换 / 历史 控件 */
+.convrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.convrow input,.convrow select{padding:7px 10px;border-radius:9px;background:var(--bg2);
+  border:1px solid var(--line);outline:none;font-size:12.5px;color:var(--tx);font-family:inherit}
+.convrow input:focus,.convrow select:focus{border-color:var(--acc)}
+.cvlab{font-size:12px;color:var(--tx3)}
+.cvleap{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2);cursor:pointer}
+.cvleap input{width:14px;height:14px;accent-color:var(--acc)}
+.gobtn{padding:7px 18px;border-radius:9px;background:var(--acc);color:var(--night);
+  font-size:12.5px;font-weight:700;transition:.15s}
+.gobtn:hover{background:var(--oat)}
+.convout{margin-top:14px}
+.cvbig{font-size:26px;font-weight:600;color:var(--cream);letter-spacing:.5px}
+.cvsub{font-size:12px;color:var(--tx3);margin-top:5px}
+.cverr{font-size:12.5px;color:#E8A183;padding:10px 0}
+html[data-theme="light"] .cverr{color:#8F4020}
+.hint{font-size:10.5px;color:var(--tx3);margin-top:9px;line-height:1.6}
+.minib{margin-left:auto;padding:3px 10px;border-radius:8px;font-size:11px;
+  background:var(--card2);border:1px solid var(--line2);color:var(--tx2)}
+.minib:hover{border-color:var(--acc);color:var(--acc)}
+
+/* 历史结果 */
+.histone{display:flex;gap:18px;align-items:center;padding:6px 0 14px}
+.hbig{font-size:34px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--cream)}
+.hbig small{font-size:18px;color:var(--tx3);font-weight:400}
+.hsub{font-size:12px;color:var(--tx2);margin-top:4px}
+.histmeta{font-size:12px;color:var(--tx2);padding-top:12px;border-top:1px solid var(--line2);line-height:1.8}
+.hstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-top:14px}
+.hstats .b{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:9px 10px}
+.hstats .b .k{font-size:10px;color:var(--tx3)}
+.hstats .b .v{font-size:14px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.narr p{font-size:12.5px;line-height:1.85;color:var(--tx2);margin-bottom:8px}
+.narr p:first-child{color:var(--tx);font-size:13px}
+
+@media(max-width:640px){
+  body{padding:12px}
+  .clock{font-size:46px}
+  .dv .big{font-size:64px}
+  .fcr{grid-template-columns:62px 32px 1fr 104px;gap:7px}
+  .advswing{margin-left:0;width:100%}
+}
+
+/* 冷暖体质切换 */
+.biasbox{display:flex;align-items:center;gap:5px;margin-left:auto}
+.biasbox .bl{font-size:10.5px;color:var(--tx3);letter-spacing:1px;margin-right:2px}
+.bb{padding:3px 10px;border-radius:14px;font-size:11.5px;color:var(--tx3);
+  background:var(--card2);border:1px solid var(--line2);transition:.15s}
+.bb:hover{border-color:var(--acc)}
+.bb.on{background:var(--acc);color:var(--night);border-color:var(--acc);font-weight:700}
+@media(max-width:640px){.biasbox{margin-left:0;width:100%;margin-top:6px}}
+/* 搜索结果里的行政区提示 */
+.sug .viadist{color:var(--warm);font-size:11px;padding:7px 14px;border-bottom:1px solid var(--line2)}
+
+/* ================= 年视图 ================= */
+.yg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:900px){.yg{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.yg{grid-template-columns:repeat(2,1fr)}}
+.ym{background:var(--card2);border:1px solid var(--line2);border-radius:11px;padding:9px 8px 8px;transition:.14s}
+.ym:hover{border-color:var(--line);background:var(--card)}
+.ymh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;cursor:pointer;padding:1px 2px;border-radius:5px}
+.ymh:hover{color:var(--acc)}
+.ymh b{font-size:14px;font-weight:700;letter-spacing:.3px}
+.ymh span{font-size:10px;color:var(--tx3)}
+.ymw{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px}
+.ymw u{text-decoration:none;font-size:8.5px;color:var(--tx3);text-align:center;line-height:1.5}
+.ymw u:nth-child(1),.ymw u:nth-child(7){color:var(--rest)}
+.ymd{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.ymd i{font-style:normal;font-size:10px;text-align:center;line-height:16px;height:16px;border-radius:4px;
+  color:var(--tx2);font-variant-numeric:tabular-nums;cursor:pointer;position:relative;transition:.1s}
+.ymd i:empty{cursor:default}
+.ymd i:hover:not(:empty){background:var(--line);color:var(--tx)}
+.ymd i.e{color:var(--rest);opacity:.75}
+.ymd i.r{background:rgba(217,143,91,.24);color:var(--rest);font-weight:700}
+.ymd i.w{background:rgba(143,122,94,.24);color:var(--work)}
+.ymd i.f{color:var(--golden);font-weight:700}
+html[data-theme="light"] .ymd i.f{color:var(--caramel)}
+.ymd i.t{color:var(--green);font-weight:600}
+.ymd i.n{outline:1.5px solid var(--acc);outline-offset:-1.5px;color:var(--acc);font-weight:800}
+.ylegend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--line2);font-size:10.5px;color:var(--tx2)}
+.ylegend span{display:flex;align-items:center;gap:4px}
+.ylegend i{font-style:normal;width:11px;height:11px;border-radius:3px;display:inline-block}
+.ylegend i.r{background:rgba(217,143,91,.5)}
+.ylegend i.w{background:rgba(143,122,94,.5)}
+.ylegend i.f{background:var(--golden)}
+.ylegend i.t{background:var(--green)}
+.ylegend i.e{background:var(--rest);opacity:.5}
+.ylegend i.n{border:1.5px solid var(--acc);background:transparent}
+
+/* 时区换算：两侧结构完全一致 */
+.tzf input[type="datetime-local"]{margin-top:7px}
+.tzf .out{min-height:52px}
+
+/* ================= 滚轮选择器 ================= */
+.wheels{display:flex;gap:10px;align-items:flex-end}
+.wcol{flex:1;min-width:0}
+.wcol label{display:block;font-size:10.5px;color:var(--tx3);letter-spacing:1px;margin-bottom:5px;text-align:center}
+.wp{position:relative;height:170px;border-radius:12px;background:var(--card2);
+  border:1px solid var(--line2);overflow:hidden;outline:none;transition:.15s}
+.wp:focus-within,.wp:hover{border-color:var(--line)}
+.wp:focus{border-color:var(--acc)}
+/* 中央选中框 */
+.wp .wsel{position:absolute;left:6px;right:6px;top:50%;height:34px;transform:translateY(-50%);
+  border-radius:8px;background:rgba(212,165,116,.15);border:1px solid rgba(212,165,116,.36);
+  pointer-events:none;z-index:2}
+/* 上下渐隐，做出转盘的弧度感 */
+.wp::before,.wp::after{content:'';position:absolute;left:0;right:0;height:56px;z-index:3;pointer-events:none}
+.wp::before{top:0;background:linear-gradient(var(--bg2),transparent)}
+.wp::after{bottom:0;background:linear-gradient(transparent,var(--bg2))}
+html[data-theme="light"] .wp::before{background:linear-gradient(#F4E8D6,transparent)}
+html[data-theme="light"] .wp::after{background:linear-gradient(transparent,#F4E8D6)}
+.wlist{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;
+  -ms-overflow-style:none;position:relative;z-index:1;padding:0;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.wlist::-webkit-scrollbar{display:none}
+.wi{height:34px;line-height:34px;text-align:center;font-size:14.5px;scroll-snap-align:center;
+  color:var(--tx2);cursor:pointer;font-variant-numeric:tabular-nums;
+  transition:opacity .12s,transform .12s,color .12s;user-select:none;white-space:nowrap}
+.wi.wpad{cursor:default;pointer-events:none;scroll-snap-align:none}  /* 占位格不能成为吸附目标 */
+.wi.on{color:var(--cream);font-weight:700;font-size:15.5px}
+.wtoday{display:flex;align-items:center;gap:10px;margin-top:12px}
+.wtoday .minib{margin-left:0}
+.leaphint{font-size:11px;color:var(--tx3)}
+@media(max-width:640px){ .wp{height:150px} }
+
+/* 指标小图标 */
+.mi{width:13px;height:13px;vertical-align:-2px;margin-right:5px;opacity:.72;flex-shrink:0}
+.wm .k{display:flex;align-items:center}
+.wm .k span{display:inline-block}
+.sug .ename{font-size:11px;color:var(--tx3);font-weight:400;margin-left:6px}
+
+/* ================= 日内曲线 ================= */
+.intrahead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+.intrahead .il{font-size:12.5px;font-weight:600;color:var(--tx2)}
+.intrahead .ir{font-size:10.5px;color:var(--tx3)}
+#intraSec{margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line2)}
+
+/* ================= 数据源 ================= */
+.srcbar{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2);
+  font-size:10.5px;color:var(--tx3);line-height:1.7}
+.srcbar b{color:var(--tx2);font-weight:600}
+.srcrow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:560px){.srcrow{grid-template-columns:1fr}}
+.srcopt{padding:11px 12px;border-radius:11px;background:var(--card2);border:1px solid var(--line2);
+  cursor:pointer;transition:.14s}
+.srcopt:hover{border-color:var(--line)}
+.srcopt.on{border-color:var(--acc);background:rgba(212,165,116,.14)}
+.srcopt b{display:block;font-size:13px;margin-bottom:3px}
+.srcopt.on b{color:var(--acc)}
+.srcopt small{font-size:10.5px;color:var(--tx3);line-height:1.55;display:block}
+.qwbox{margin-top:12px;padding:12px;border-radius:11px;background:var(--card2);border:1px solid var(--line2)}
+.qwbox label{display:block;font-size:11px;color:var(--tx3);margin-bottom:9px}
+.qwbox input{display:block;width:100%;margin-top:4px;padding:7px 10px;border-radius:8px;
+  background:var(--bg2);border:1px solid var(--line);outline:none;font-size:12.5px;color:var(--tx);
+  font-family:inherit}
+.qwbox input:focus{border-color:var(--acc)}
+.qwbtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.qwbtns .minib{margin-left:0}
+.qwmsg{font-size:11.5px;margin-top:9px;min-height:16px;line-height:1.6}
+.qwbox code{background:var(--bg2);padding:1px 5px;border-radius:4px;font-size:11px}
+
+/* ================= 气象预警 ================= */
+.warns{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.warn{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;
+  background:var(--wbg);border:1px solid var(--wc);border-left-width:3px}
+.warn .wico{font-size:15px;line-height:1.25;flex-shrink:0}
+.warn .wtxt{flex:1;min-width:0}
+.warn .wtxt b{display:block;font-size:12.5px;font-weight:700;color:var(--wc)}
+.warn .wtxt small{display:block;font-size:11px;color:var(--tx2);margin-top:2px;line-height:1.55}
+.warn .wtag{flex-shrink:0;font-size:9.5px;color:var(--tx3);padding:2px 6px;border-radius:5px;
+  background:var(--card2);align-self:center;white-space:nowrap}
+
+/* 过去三天实况 */
+.fcr.past{opacity:.62}
+.fcr.past:hover{opacity:.85}
+.fcr.past .day{color:var(--tx3)}
+.fcdiv{display:flex;align-items:center;gap:8px;margin:5px 0 3px;
+  font-size:9.5px;color:var(--tx3);letter-spacing:.5px}
+.fcdiv::before,.fcdiv::after{content:'';flex:1;height:1px;background:var(--line2)}
+
+/* ================= 换配色 =================
+   只有两套，就是文件开头那两块：:root 是蓝调时刻（暗），
+   html[data-theme="light"] 是玫瑰黎明（亮）。◐ 按钮在两者之间切。
+
+   想改配色：改那两块里的变量即可，无需动任何 JS ——
+   图表和天气图标在运行时用 cssVar() 读同一批变量。
+   改完请跑 npm run test:offline，里面有对比度验算，
+   低于 WCAG AA 会直接失败。 */
+
+/* ===================== RTL（阿拉伯语）适配 =====================
+   切到 ar 时 90-app.js 会给 <html> 设 dir="rtl"，其余语言设 dir="ltr"。
+   flex / grid 的排列方向浏览器会跟着 dir 自动翻，这里只处理三类它翻不了的：
+     1) 写死物理方向的属性（margin-left / left / right / text-align）
+     2) 不该翻的内容（SVG 图表、时钟数字、温度数字）—— 强制拉回 ltr
+     3) 日历格子：外层网格翻成从右往左，格子里的数字保持 ltr
+   ------------------------------------------------------------------ */
+
+/* ---- 1. 需要镜像的物理属性 ---- */
+
+/* 建议面板左侧标签：flex 会自动换边，这里补上文字对齐 */
+html[dir="rtl"] .advrow .lb{ text-align:right; letter-spacing:0 }
+html[dir="rtl"] .advswing{ margin-left:0; margin-right:auto }
+html[dir="rtl"] .advnotes{ padding-left:0; padding-right:16px }
+html[dir="rtl"] .advat small{ margin-left:0; margin-right:6px }
+
+/* 体质选择框：margin-left:auto → margin-right:auto */
+html[dir="rtl"] .biasbox{ margin-left:0; margin-right:auto }
+html[dir="rtl"] .biasbox .bl{ margin-right:0; margin-left:2px }
+@media(max-width:640px){ html[dir="rtl"] .biasbox{ margin-right:0 } }
+
+/* 时区换算两地行：数字块靠边的 margin-left:auto → margin-right:auto */
+html[dir="rtl"] .tmr .tt{ margin-left:0; margin-right:auto; text-align:left }
+
+/* 节日列表：日期块和倒数天数换边 */
+html[dir="rtl"] .hli .dt2{ text-align:center }
+html[dir="rtl"] .hli .cd{ text-align:left }
+html[dir="rtl"] .hl{ padding-right:0; padding-left:4px }
+
+/* 7 天预报网格：列顺序跟着 dir 翻，条形图的低温标签换边 */
+html[dir="rtl"] .fcr{ direction:rtl }
+html[dir="rtl"] .fcr .cond em{ margin-left:0; margin-right:6px }
+html[dir="rtl"] .bar .lo{ text-align:left }
+
+/* 世界时钟卡片的 ★：右上角 → 左上角 */
+html[dir="rtl"] .wcc .star{ right:auto; left:9px }
+
+/* 搜索建议：文字靠右，放大镜图标换边 */
+html[dir="rtl"] .sug{ text-align:right }
+html[dir="rtl"] .sug div{ text-align:right }
+html[dir="rtl"] .sug .ename{ margin-left:0; margin-right:6px }
+html[dir="rtl"] .search .ico{ left:auto; right:12px }
+html[dir="rtl"] .search input{ padding-left:14px; padding-right:36px }
+
+/* 其余零散的 margin-left:auto / 物理内边距 */
+html[dir="rtl"] .minib{ margin-left:0; margin-right:auto }
+html[dir="rtl"] .wtoday .minib,
+html[dir="rtl"] .qwbtns .minib{ margin-right:0 }
+html[dir="rtl"] .clock .ap{ margin-left:0; margin-right:10px }
+html[dir="rtl"] .cnav .ttl small{ margin-left:0; margin-right:8px }
+html[dir="rtl"] .errbar button{ margin-left:0; margin-right:8px }
+html[dir="rtl"] .mi{ margin-right:0; margin-left:5px }
+html[dir="rtl"] .warns > *{ border-left-width:1px; border-right-width:3px }
+html[dir="rtl"] .now::after{ right:auto; left:-70px }
+
+/* ---- 2. 不镜像：数值轴要保持左→右阅读 ---- */
+
+/* SVG 图表整体（温度曲线、降水柱、逐时图、年份对比图） */
+html[dir="rtl"] svg{ direction:ltr }
+html[dir="rtl"] .chart, html[dir="rtl"] .chartwrap{ direction:ltr }
+
+/* 时钟数字、温度数字、各类等宽数字 —— 保持 ltr，否则 “-5°” 会翻成 “°5-” */
+html[dir="rtl"] .clock,
+html[dir="rtl"] .tmr .tt,
+html[dir="rtl"] .wcc .t,
+html[dir="rtl"] .cell .d,
+html[dir="rtl"] .wvc .d,
+html[dir="rtl"] .wvc .tp,
+html[dir="rtl"] .hli .dt2 .d,
+html[dir="rtl"] .bar,
+html[dir="rtl"] .ymd i{ direction:ltr; unicode-bidi:isolate }
+
+/* ---- 3. 日历网格：星期从右往左，格子内部拉回 ltr ---- */
+
+/* 月视图：表头和日期格都翻向，第一列落在右边 */
+html[dir="rtl"] .wk,
+html[dir="rtl"] .mg,
+html[dir="rtl"] .wv{ direction:rtl }
+/* 但格子里的日期数字、农历小字保持正常阅读顺序 */
+html[dir="rtl"] .cell,
+html[dir="rtl"] .wvc{ direction:ltr }
+html[dir="rtl"] .cell .l{ direction:rtl }
+html[dir="rtl"] .cell .tag{ right:auto; left:4px }
+html[dir="rtl"] .cell .wx{ right:auto; left:4px }
+
+/* 年视图的小月历同理：网格翻向，格子内数字 ltr */
+html[dir="rtl"] .ymd{ direction:rtl }
+
+/* 历法选择下拉（放在互转面板标题栏） */
+.calsel{padding:5px 24px 5px 9px;border-radius:8px;background:var(--card2);
+  border:1px solid var(--line2);font-size:11.5px;color:var(--tx2);cursor:pointer;
+  appearance:none;-webkit-appearance:none;font-family:inherit;
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center}
+.calsel:hover,.calsel:focus{border-color:var(--acc);color:var(--tx)}
+
+/* ================= 无障碍 ================= */
+/* 跳转链接：键盘用户按 Tab 第一下就能跳过顶栏直达主内容 */
+.skiplink{position:absolute;left:-9999px;top:0;z-index:200;
+  padding:10px 18px;border-radius:0 0 10px 0;background:var(--acc);color:var(--night);
+  font-size:13px;font-weight:700;text-decoration:none}
+.skiplink:focus{left:0}
+
+/* 焦点可见：默认的 outline 在深色底上几乎看不见 */
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.cell:focus-visible,.wvc:focus-visible,.ymd i:focus-visible{outline-offset:-2px}
+
+/* 尊重「减少动态效果」的系统设置 */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important; scroll-behavior:auto !important;
+  }
+  .wlist{scroll-snap-type:none}
+}
+
+/* 高对比度模式：加粗边框，去掉半透明 */
+@media (prefers-contrast: more){
+  .card,.wm,.wcc,.srcopt,.qwbox{border-width:2px}
+  .cell.today::before{width:5px;height:5px}
+}
+
+/* 仅供屏幕阅读器 */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* 「当前天气」标题。加它是因为右侧还有一块「天气 · 未来 7 天」，
+   两处都是天气，不写清楚容易看混。样式跟其他卡片的 h3 保持一致。 */
+.now .nowtitle{
+  margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.02em;
+  color:var(--tx2); text-transform:none;
+}
+/* 天气段的小标题。这一块和右侧的「天气 · 未来 7 天」都是天气，
+   不写清楚哪个是实况、哪个是预报，很容易看混。
+   .wnow 自己带 border-top 分隔线，所以标题要放到线的下面。 */
+.now .wnowtitle{
+  margin:17px 0 0; padding-top:17px; border-top:1px solid var(--line2);
+  font-size:13px; font-weight:600; letter-spacing:.02em; color:var(--tx2);
+}
+.now .wnowtitle + .wnow{margin-top:11px; padding-top:0; border-top:0}
+
+
+/* 语言选择：前面挂一个地球图标。
+   加它是因为下拉框里显示的是「English」「日本語」这类当前语言的名字，
+   万一手滑切成看不懂的语言，就找不到回去的入口了 —— 图标是语言无关的锚点。
+   图标叠在 select 上面，pointer-events:none 保证点击照样落到 select 上。 */
+.langwrap{position:relative;display:inline-flex;align-items:center}
+.langico{
+  position:absolute; left:9px; font-size:13px; line-height:1;
+  pointer-events:none; opacity:.85;
+}
+select.langsel{padding-left:28px}
+html[dir="rtl"] .langico{left:auto; right:9px}
+html[dir="rtl"] select.langsel{padding-left:10px; padding-right:28px}

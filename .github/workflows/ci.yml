@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 测试与构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 项目零依赖，没有 npm install 这一步
+
+      - name: 语法与命名检查
+        run: npm run check
+
+      - name: 农历引擎（1900–2100 全量往返 + 历书锚点）
+        run: npm run test:lunar
+
+      - name: 离线核心（节假日 / 建议 / 预警 / 图表 / XSS）
+        run: npm run test:offline
+
+      - name: 多历法
+        run: npm run test:calendar
+
+      - name: 预警源解析
+        run: npm run test:alert
+
+      - name: 多语言（需联网，失败不阻断）
+        run: npm run test:i18n
+        continue-on-error: true
+
+      - name: 构建
+        run: npm run build
+
+      - name: 无障碍与内容安全策略
+        run: npm run test:a11y
+
+      - name: 界面快照回归
+        run: npm run test:ui
+
+      - name: 检查构建产物带有法务横幅
+        run: |
+          set -e
+          for f in "dist/天时-单文件.html" "dist/天时-单文件-带图标.html" "dist/pwa/index.html"; do
+            grep -q "SIL Open Font License" "$f" || { echo "❌ $f 缺少字体许可声明"; exit 1; }
+            grep -q "Open-Meteo" "$f" || { echo "❌ $f 缺少数据署名"; exit 1; }
+          done
+          echo "✅ 所有产物均带署名"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: meridian-dist
+          path: dist/
+          retention-days: 14

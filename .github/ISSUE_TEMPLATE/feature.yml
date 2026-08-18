@@ -1,0 +1,20 @@
+name: 功能建议 / Feature request
+description: 想要新功能
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提之前请知道这个项目**明确不做**的事：引入运行时依赖、加追踪统计广告、要求注册或密钥才能用基础功能。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你想解决什么问题
+      description: 描述场景而不是直接给方案，这样更容易找到合适的做法。
+    validations: { required: true }
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: 你设想的做法（可选）

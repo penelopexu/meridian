@@ -1,0 +1,56 @@
+{
+  "name": "meridian",
+  "version": "0.1.0",
+  "description": "万年历 + 农历 + 二十四节气 + 中国法定节假日 + 全球天气与历史气候。零依赖、无需 API Key、不收集数据。",
+  "type": "module",
+  "license": "MIT",
+  "author": "Estel",
+  "homepage": "https://github.com/penelopexu123/meridian",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/penelopexu123/meridian.git"
+  },
+  "bugs": {
+    "url": "https://github.com/penelopexu123/meridian/issues"
+  },
+  "keywords": [
+    "calendar",
+    "weather",
+    "lunar-calendar",
+    "chinese-calendar",
+    "solar-terms",
+    "pwa",
+    "zero-dependency",
+    "open-meteo",
+    "万年历",
+    "农历",
+    "二十四节气",
+    "天气"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node scripts/run-tests.mjs",
+    "test:i18n": "node scripts/i18n-test.mjs",
+    "test:lunar": "node scripts/lunar-test.mjs",
+    "test:offline": "node scripts/offline-test.mjs",
+    "test:calendar": "node scripts/calendar-test.mjs",
+    "test:alert": "node scripts/alert-test.mjs",
+    "test:a11y": "node scripts/a11y-test.mjs",
+    "test:ui": "node scripts/zh-regression.mjs",
+    "check": "node scripts/syntax-check.mjs",
+    "serve": "node scripts/serve.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "src",
+    "public",
+    "build.mjs",
+    "LICENSE",
+    "NOTICE",
+    "licenses"
+  ],
+  "private": false
+}

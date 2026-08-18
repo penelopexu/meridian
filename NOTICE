@@ -1,0 +1,101 @@
+天时 · Tianshi — Third-Party Notices
+====================================
+
+本项目由多个许可证不同的组件构成。使用或再分发时请遵守各自条款。
+This project bundles components under different licenses. Please respect
+each of them when using or redistributing.
+
+
+1. 源代码 / Source code
+-----------------------
+License: MIT
+Copyright (c) 2026 Estel
+见 / See: LICENSE
+
+
+2. 内嵌字体 / Embedded typeface — Plus Jakarta Sans
+---------------------------------------------------
+License: SIL Open Font License 1.1
+Copyright 2020 The Plus Jakarta Sans Project Authors
+Upstream: https://github.com/tokotype/PlusJakartaSans
+见 / See: licenses/OFL.txt
+
+说明 / Notes:
+  * 本项目使用的是**子集化**版本：仅保留拉丁字母、数字与常用标点，
+    转为 woff2 后以 base64 内嵌于 src/fonts.css，三个字重共约 21 KB。
+    子集化属于 OFL 定义的 "Modified Version"。
+  * 上游版权声明中**未声明 Reserved Font Name**，因此按 OFL 第 3 条，
+    子集版本可以继续使用 "Plus Jakarta Sans" 这一名称。
+  * 按 OFL 第 5 条，字体部分（含子集）必须整体保持 OFL 1.1，
+    不能改为 MIT 或其他许可。**本项目的 MIT 许可不覆盖字体数据。**
+  * 按 OFL 第 1 条，字体不得被单独出售。
+
+  * This project embeds a SUBSET (Latin letters, digits, common punctuation)
+    converted to woff2 and base64-inlined in src/fonts.css (~21 KB, 3 weights).
+    Subsetting constitutes a "Modified Version" under the OFL.
+  * The upstream copyright statement declares NO Reserved Font Name, so under
+    OFL clause 3 the subset may keep the name "Plus Jakarta Sans".
+  * Under OFL clause 5, the font (including the subset) must remain entirely
+    under OFL 1.1. The project's MIT license does NOT cover the font data.
+  * Under OFL clause 1, the font must not be sold by itself.
+
+
+3. 天气与历史气候数据 / Weather & climate data — Open-Meteo
+----------------------------------------------------------
+License: CC BY 4.0
+Source: https://open-meteo.com/
+署名要求 / Attribution is REQUIRED. 界面页脚与本文件均已署名。
+
+底层数据来自各国气象机构的开放数据 / Underlying data from national services:
+  * ECMWF (IFS/AIFS)
+  * NOAA / NCEP (GFS, HRRR)
+  * DWD (ICON, ICON-D2)
+  * Météo-France (AROME, ARPEGE)
+  * UK Met Office (UKV)
+  * JMA (MSM)
+  * CMA (GRAPES)
+  * ERA5 / ERA5T reanalysis (Copernicus Climate Change Service)
+
+  ERA5 数据含 Copernicus Climate Change Service 信息，
+  "neither the European Commission nor ECMWF is responsible for any use
+  that may be made of the Copernicus information or data it contains."
+
+
+4. 地理编码 / Geocoding — GeoNames (经 Open-Meteo 提供)
+-------------------------------------------------------
+License: CC BY 4.0
+Source: https://www.geonames.org/
+本项目内置的 144 座城市离线库（src/js/40-cities.js）由该数据派生。
+The bundled 144-city offline database is derived from this data.
+
+
+5. 中国行政区划 / Chinese administrative divisions
+--------------------------------------------------
+License: WTFPL (Do What The Fuck You Want To Public License)
+Source: https://github.com/modood/Administrative-divisions-of-China
+原始数据来自中华人民共和国民政部 / Original data from PRC Ministry of Civil Affairs.
+本项目内置的 2885 条「县级 → 地级市」映射（src/js/45-cn-districts.js）由该数据派生。
+
+
+6. 可选数据源 / Optional data source — 和风天气 QWeather
+--------------------------------------------------------
+License: CC BY-SA 4.0 (免费订阅 / Free subscription tier)
+Source: https://dev.qweather.com/
+仅在用户自行填入 API 凭据后启用。启用时界面会显示数据来源署名。
+Only active when the user supplies their own API credentials. When active,
+the UI displays the attribution.
+
+
+7. 中国法定节假日 / Chinese public holidays
+-------------------------------------------
+依据中华人民共和国国务院办公厅历年《关于部分节假日安排的通知》整理。
+Compiled from the annual notices issued by the General Office of the
+State Council of the People's Republic of China.
+政府公文不受著作权保护 / Government documents are not subject to copyright.
+
+
+8. 图标与插图 / Icons and illustrations
+---------------------------------------
+天气图标、指标图标、应用图标均为本项目原创，随源代码采用 MIT 许可。
+All weather icons, metric icons and app icons are original works of this
+project and are covered by the MIT license along with the source code.

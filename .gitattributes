@@ -1,0 +1,17 @@
+# 统一换行符：仓库内一律 LF，检出时不改写。
+# 你在 Windows 开发、别人在 macOS/Linux，不统一的话每次 diff 都是整文件。
+* text=auto eol=lf
+
+# 二进制文件不做任何转换
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+
+# 这些文件在 GitHub 的语言统计里忽略（是数据不是代码）
+src/js/40-cities.js      linguist-generated=true
+src/js/45-cn-districts.js linguist-generated=true
+src/fonts.css            linguist-generated=true
+dist/*                   linguist-generated=true

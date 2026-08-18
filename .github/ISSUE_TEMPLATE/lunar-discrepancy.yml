@@ -1,0 +1,41 @@
+name: 历法数据存疑 / Calendar discrepancy
+description: 农历、节气、节假日日期与权威历书不符
+labels: [calendar, help wanted]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **这类反馈特别欢迎。** 已知本项目的农历引擎与 ICU（浏览器内置的 chinese 日历）在 1901–2099 有约 300 天日序不同、177 天仅闰月标号不同，涉及 13 个年份：
+        `1917, 1922, 1933, 1954, 1955, 1987, 1999, 2012, 2018, 2027, 2030, 2060, 2070`
+
+        完整清单见 `docs/lunar-vs-icu.tsv`（跑 `npm run test:lunar` 会重新生成）。
+
+        目前的判断依据是：凡能与公开历书核对的锚点（春节日期、闰月月份），本项目引擎都正确。但**没有建立完全独立的天文验证**，所以欢迎复核。
+
+  - type: input
+    id: date
+    attributes:
+      label: 哪一天
+      placeholder: 1987-07-26
+    validations: { required: true }
+
+  - type: input
+    id: shown
+    attributes:
+      label: 本项目显示
+      placeholder: 闰六月初一
+    validations: { required: true }
+
+  - type: input
+    id: expected
+    attributes:
+      label: 你认为应该是
+      placeholder: 七月初一
+    validations: { required: true }
+
+  - type: textarea
+    id: source
+    attributes:
+      label: 依据
+      description: 历书名称、天文台数据、或推算过程。这是最关键的部分。
+    validations: { required: true }
