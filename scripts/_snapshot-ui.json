@@ -1,4 +1,8 @@
 {
+ "_env": {
+  "node": "22",
+  "icu": "78.2"
+ },
  "#addFav:txt": "73abafba029d5ef9",
  "#adviceBody": "3d58fbd274936e61",
  "#adviceTitle:txt": "38de628d95dd027b",

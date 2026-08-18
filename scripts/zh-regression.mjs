@@ -134,6 +134,12 @@ const sha = v => createHash('sha256').update(String(v)).digest('hex').slice(0, 1
 const now = {};
 for (const k of Object.keys(out).sort()) now[k] = sha(out[k]);
 
+/* 记下生成快照时的运行环境。
+   渲染结果里有一部分来自 Intl（国名、非公历历法），而 ICU 数据是随 Node
+   一起发布的 —— 换个 Node 大版本，同样的代码可能输出不同的字符串。
+   把版本记进快照，比对失败时就能一眼分清是「代码变了」还是「环境变了」。 */
+const envNow = { node: process.versions.node.split('.')[0], icu: process.versions.icu || '?' };
+
 if (DUMP) {
   mkdirSync(join(ROOT, 'dist'), { recursive: true });
   writeFileSync(join(ROOT, 'dist', 'ui-dump.json'), JSON.stringify(out, null, 1));
@@ -141,13 +147,17 @@ if (DUMP) {
 }
 
 if (UPDATE || !existsSync(SNAP)) {
-  writeFileSync(SNAP, JSON.stringify(now, null, 1) + '\n');
+  writeFileSync(SNAP, JSON.stringify({ _env: envNow, ...now }, null, 1) + '\n');
   console.log(`${existsSync(SNAP) && !UPDATE ? '首次生成' : '已更新'}黄金快照：${Object.keys(now).length} 块`);
+  console.log(`生成环境：Node ${envNow.node} · ICU ${envNow.icu}`);
   console.log('请自己确认界面确实该这么变，再把快照一起提交。');
   process.exit(0);
 }
 
-const want = JSON.parse(readFileSync(SNAP, 'utf8'));
+const raw = JSON.parse(readFileSync(SNAP, 'utf8'));
+const envWas = raw._env || null;
+const want = { ...raw }; delete want._env;
+
 const changed = [], added = [], removed = [];
 for (const k of Object.keys(now)) {
   if (!(k in want)) added.push(k);
@@ -163,6 +173,16 @@ if (!changed.length && !added.length && !removed.length) {
 for (const k of changed) console.log(`  \x1b[31m✗ 变了\x1b[0m   ${k}`);
 for (const k of added)   console.log(`  \x1b[33m+ 新增\x1b[0m   ${k}`);
 for (const k of removed) console.log(`  \x1b[33m- 消失\x1b[0m   ${k}`);
+
+/* 环境不同就先说这件事 —— 否则贡献者会以为自己改坏了什么 */
+if (envWas && envWas.node !== envNow.node) {
+  console.log(`\n  \x1b[33m注意：快照是在 Node ${envWas.node}（ICU ${envWas.icu}）上生成的，` +
+              `你现在跑的是 Node ${envNow.node}（ICU ${envNow.icu}）。\x1b[0m`);
+  console.log('  渲染结果里有一部分来自 Intl（国名、非公历历法），而 ICU 数据随 Node 发布，');
+  console.log('  所以换 Node 大版本本身就可能让哈希对不上，未必是你改坏了什么。');
+  console.log('  先用 --dump 看看差异是不是只出现在这类字符串上。');
+}
+
 console.log('\n  如果这些变化是你有意做的：');
 console.log('    node scripts/zh-regression.mjs --dump     # 先看看具体差在哪');
 console.log('    node scripts/zh-regression.mjs --update   # 确认无误后更新快照');
