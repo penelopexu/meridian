@@ -301,10 +301,24 @@ html[data-theme="light"] .wxerr .m{color:#8F4020}
 /* ================= v2 新增 ================= */
 .h3sub{font-size:10.5px;color:var(--tx3);text-transform:none;letter-spacing:0;font-weight:400}
 select.tbtn{padding:9px 26px 9px 12px;appearance:none;-webkit-appearance:none;cursor:pointer;
-  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23CDB795' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  /* 箭头颜色跟随强调色：暗色 #E9A96B（琥珀），亮色 #A8455E（玫瑰）。
+     data URI 里不能用 CSS 变量，所以两套主题各写一份。 */
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23E9A96B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 10px center}
 html[data-theme="light"] select.tbtn{
-  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%237A5A3A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23A8455E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+
+/* iOS Safari 会用系统蓝色渲染 <select> 的文字，普通的 color 压不住它 ——
+   必须同时写 -webkit-text-fill-color。桌面浏览器不受影响，所以以前没发现。
+   `select` 全都写上，包括时区换算和历法那几个。 */
+select, select.tbtn, select.calsel{
+  color:var(--tx); -webkit-text-fill-color:var(--tx);
+}
+/* 手机上字号小于 16px 时，iOS 聚焦输入控件会自动放大整页。
+   把下拉和输入框统一到 16px 可以避免这个跳动。 */
+@media (max-width:640px){
+  select, input[type="search"], input[type="date"], input[type="datetime-local"]{ font-size:16px }
+}
 /* 下拉展开后的选项：Windows/Linux 的 Chromium 认这两条，macOS 由 color-scheme 接管 */
 select option{background:var(--bg2);color:var(--tx)}
 select option:checked{background:var(--acc);color:var(--night)}

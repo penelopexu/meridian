@@ -91,7 +91,7 @@ Files in `src/js/` are **concatenated in filename order** and run as a single sc
 | `npm run check` | syntax, top-level name collisions | 6 |
 | `npm run test:lunar` | lunar engine (full 1900–2100 round-trip + almanac anchors) | 52 |
 | `npm run test:offline` | holidays / advice / warnings / charts / XSS / colour contrast & consistency | 142 |
-| `npm run test:calendar` | 12 calendar systems, location-based selection, holiday region | 77 |
+| `npm run test:calendar` | 12 calendar systems, language-based selection, holiday region | 77 |
 | `npm run test:alert` | alert parsing, source selection, dedup (real captured samples) | 132 |
 | `npm run test:i18n` | key completeness, placeholders, rendering in 9 languages (needs network) | 63 |
 | `npm run test:a11y` | accessibility and Content Security Policy | 109 |

@@ -83,47 +83,51 @@ for (const cal of ['chinese','islamic-umalqura','hebrew',null]) {
 G.S.calendar = 'auto';
 
 
-/* ---------- 择历：地点优先、语言兜底 ---------- */
-t.section('按地点选历法');
+/* ---------- 择历：只看界面语言 ---------- */
+t.section('按语言选历法');
 {
   const R = (choice, lang, place) => ctx.resolveCalendar(choice, lang, place);
-  const CN={cc:'CN'}, GB={cc:'GB'}, KR={cc:'KR'}, JP={cc:'JP'},
-        IR={cc:'IR'}, TH={cc:'TH'}, SA={cc:'SA'}, TW={cc:'TW'}, US={cc:'US'};
+  const CN={cc:'CN'}, GB={cc:'GB'}, JP={cc:'JP'}, KR={cc:'KR'};
 
-  /* 1. 地点有本土历法 —— 界面什么语言都显示它 */
-  t.eq('北京 + 英文 → 农历', R('auto','en',CN), 'chinese');
-  t.eq('北京 + 中文 → 农历', R('auto','zh-CN',CN), 'chinese');
-  t.eq('首尔 + 英文 → 檀纪', R('auto','en',KR), 'dangi');
-  t.eq('东京 + 英文 → 和历', R('auto','en',JP), 'japanese');
-  t.eq('德黑兰 + 英文 → 波斯历', R('auto','en',IR), 'persian');
-  t.eq('曼谷 + 英文 → 佛历', R('auto','en',TH), 'buddhist');
-  t.eq('利雅得 + 英文 → 伊斯兰历', R('auto','en',SA), 'islamic-umalqura');
-  t.eq('台北 → 民国纪年', R('auto','en',TW), 'roc');
+  /* 核心约定：非中文界面绝不出现农历，哪怕地点在中国。
+     这是实际用下来定的 —— 英文界面里冒出「Lunar 丙午马年」既读不懂也突兀。 */
+  t.eq('北京 + 英文 → 不显示（地点在中国也不显示）', R('auto','en',CN), null);
+  t.eq('北京 + 西班牙文 → 不显示', R('auto','es',CN), null);
+  t.eq('北京 + 法文 → 不显示', R('auto','fr',CN), null);
+  t.eq('北京 + 德文 → 不显示', R('auto','de',CN), null);
+  t.eq('东京 + 英文 → 不显示', R('auto','en',JP), null);
 
-  /* 2. 地点没有本土历法 —— 看界面语言 */
-  t.eq('伦敦 + 英文 → 不显示（这正是原先的 bug）', R('auto','en',GB), null);
-  t.eq('伦敦 + 中文 → 农历（中文用户在国外仍要看农历）', R('auto','zh-CN',GB), 'chinese');
-  t.eq('伦敦 + 阿拉伯语 → 伊斯兰历', R('auto','ar',GB), 'islamic-umalqura');
-  t.eq('纽约 + 英文 → 不显示', R('auto','en',US), null);
-  t.eq('纽约 + 日语 → 和历', R('auto','ja',US), 'japanese');
+  /* 中文界面到哪都显示农历 */
+  t.eq('北京 + 简体中文 → 农历', R('auto','zh-CN',CN), 'chinese');
+  t.eq('伦敦 + 简体中文 → 农历', R('auto','zh-CN',GB), 'chinese');
+  t.eq('伦敦 + 繁体中文 → 农历', R('auto','zh-TW',GB), 'chinese');
 
-  /* 3. 用户显式选过就听他的，地点和语言都不再插手 */
-  t.eq('显式选希伯来历，在北京也照用', R('hebrew','zh-CN',CN), 'hebrew');
-  t.eq('显式选「不显示」，在北京也不显示', R(null,'zh-CN',CN), null);
+  /* 其他语言各自的历法 */
+  t.eq('日文 → 和历', R('auto','ja',GB), 'japanese');
+  t.eq('韩文 → 檀纪', R('auto','ko',GB), 'dangi');
+  t.eq('阿拉伯文 → 伊斯兰历', R('auto','ar',GB), 'islamic-umalqura');
+  t.eq('韩文 + 北京 → 仍是檀纪（不受地点影响）', R('auto','ko',CN), 'dangi');
 
-  /* 4. 地点缺失时不能崩 */
-  t.eq('无地点 + 中文 → 农历', R('auto','zh-CN',undefined), 'chinese');
-  t.eq('无地点 + 英文 → 不显示', R('auto','en',null), null);
-  t.eq('地点没有国家码 → 退回语言', R('auto','zh-CN',{lat:1,lon:1}), 'chinese');
-  t.eq('国家码小写也认', R('auto','en',{cc:'cn'}), 'chinese');
+  /* 用户显式选过就听他的 —— 想在英文界面看农历走这条路 */
+  t.eq('英文界面手选农历', R('chinese','en',GB), 'chinese');
+  t.eq('中文界面手选希伯来历', R('hebrew','zh-CN',CN), 'hebrew');
+  t.eq('显式选「不显示」', R(null,'zh-CN',CN), null);
 
-  /* 5. 表里的历法 id 必须都是真实存在的，否则会静默不显示 */
+  /* 地点参数保留但不参与推断，传什么都不该改变结果 */
+  t.eq('地点为空不影响', R('auto','zh-CN',null), 'chinese');
+  t.eq('地点为空不影响（英文）', R('auto','en',undefined), null);
+  t.eq('传任意地点结果都一样',
+       [R('auto','en',CN), R('auto','en',JP), R('auto','en',KR), R('auto','en',null)],
+       [null, null, null, null]);
+
+  /* 语言表里的历法 id 必须真实存在，否则会静默不显示 */
   const known = new Set(ctx.CALENDARS.map(c => String(c.id)));
-  const bad = Object.entries(ctx.CC_DEFAULT_CALENDAR)
-    .filter(([, v]) => !known.has(String(v))).map(([k, v]) => k + '→' + v);
-  t.eq('国家表里的历法 id 都在 CALENDARS 中' + (bad.length ? '：' + bad.join(' ') : ''), bad.length, 0);
+  const bad = Object.entries(ctx.LANG_DEFAULT_CALENDAR)
+    .filter(([, v]) => v !== null && !known.has(String(v))).map(([k, v]) => k + '→' + v);
+  t.eq('语言表里的历法 id 都在 CALENDARS 中' + (bad.length ? '：' + bad.join(' ') : ''), bad.length, 0);
+  const missing = (ctx.LOCALES || []).filter(l => !(l in ctx.LANG_DEFAULT_CALENDAR));
+  t.eq('每种语言都在表里' + (missing.length ? '：缺 ' + missing.join(' ') : ''), missing.length, 0);
 }
-
 
 /* ---------- 节日地区：地点优先、语言兜底、可手选 ---------- */
 t.section('节日地区');

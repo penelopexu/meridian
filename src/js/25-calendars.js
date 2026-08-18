@@ -115,51 +115,27 @@ function altCalendar(y, m, d, calId, locale) {
   };
 }
 
-/* 当前应使用的历法：用户显式选过就用他选的，否则用语言的默认值 */
-/* 各国/地区通行的传统历法。
-   只列真正日常在用的 —— 比如日本的年号纪年、伊朗的波斯历是官方日历，
-   而欧美国家没有并行使用的传统历，所以不在表里。 */
-const CC_DEFAULT_CALENDAR = {
-  CN:'chinese', HK:'chinese', MO:'chinese', SG:'chinese', MY:'chinese',
-  TW:'roc',
-  KR:'dangi', KP:'dangi',
-  JP:'japanese',
-  IL:'hebrew',
-  IN:'indian', NP:'indian',
-  IR:'persian', AF:'persian',
-  TH:'buddhist', KH:'buddhist', LA:'buddhist', MM:'buddhist', LK:'buddhist',
-  ET:'ethiopic', ER:'ethiopic',
-  EG:'coptic',
-  /* 以伊斯兰历为日常历法的国家 */
-  SA:'islamic-umalqura', AE:'islamic-umalqura', QA:'islamic-umalqura',
-  KW:'islamic-umalqura', BH:'islamic-umalqura', OM:'islamic-umalqura',
-  JO:'islamic-umalqura', IQ:'islamic-umalqura', YE:'islamic-umalqura',
-  PK:'islamic-umalqura', BD:'islamic-umalqura', ID:'islamic-umalqura',
-  MA:'islamic-umalqura', DZ:'islamic-umalqura', TN:'islamic-umalqura', LY:'islamic-umalqura'
-};
-
 /**
  * 当前应使用的历法。
  *
- * 用户显式选过就听他的；选「跟随」时按这个顺序推断：
+ * 用户显式选过就听他的；选「跟随」时**只看界面语言**：
+ * 中文 → 农历，韩语 → 檀纪，阿拉伯语 → 伊斯兰历，英文/西文/法文/德文 → 不显示。
  *
- *   1. 看**地点**。在北京就该看到农历，哪怕界面是英文 ——
- *      农历是那个地方的属性，不是界面语言的属性。
- *   2. 地点所在国没有并行使用的传统历（比如英国）→ 看**界面语言**。
- *      中文用户在伦敦仍然想看农历，这条兜住这种情况。
- *   3. 都没有 → 不显示。英文界面看伦敦就该是干净的公历，
- *      早先这里会莫名其妙冒出一行农历。
+ * 曾经试过「地点优先」——在北京就显示农历，哪怕界面是英文，
+ * 理由是「农历是那个地方的属性」。实际用下来不对：英文界面里冒出一行
+ * 「Lunar 丙午马年 七月初六 · 甲子」既读不懂也很突兀。
+ * 传统历法对**看得懂的人**才是信息，对其他人只是噪音，
+ * 而「看不看得懂」跟界面语言绑定，不跟地点绑定。
+ *
+ * 想在英文界面下看农历的人，下拉框里选一下就行 —— 这是少数情况，
+ * 让它走显式选择，比让所有人默认承受噪音更合理。
  *
  * @param {string} userChoice 用户在下拉框里选的，'auto' 表示跟随
  * @param {string} lang       当前界面语言
- * @param {object} place      当前地点，需要 cc 字段（国家码）
+ * @param {object} place      当前地点（保留参数以兼容调用方，当前不参与推断）
  */
 function resolveCalendar(userChoice, lang, place) {
   if (userChoice !== undefined && userChoice !== 'auto') return userChoice;
-
-  const cc = place && place.cc ? String(place.cc).toUpperCase() : '';
-  if (cc && CC_DEFAULT_CALENDAR[cc]) return CC_DEFAULT_CALENDAR[cc];
-
   const def = (typeof LANG_DEFAULT_CALENDAR === 'object' && LANG_DEFAULT_CALENDAR)
     ? LANG_DEFAULT_CALENDAR[lang] : null;
   return def === undefined ? null : def;
