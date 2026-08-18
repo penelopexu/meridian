@@ -243,7 +243,7 @@ function renderWx(){
     html+=`<div class="tmr"><div style="flex-shrink:0">${wxIcon(d.weather_code[i],1,52)}</div>
       <div><div class="lab">${T('tomorrow')}</div>
       <div class="d">${wxText(d.weather_code[i])}　${d.time[i].slice(5)} ${WDL()[dt.getUTCDay()]}</div>
-      <div class="t">${T('lunarPrefix')}${T('lunarSep')}${li.monthCN}${li.dayCN} · ${T('precipProb')} ${d.precipitation_probability_max[i]??0}% · ${T('uv')} ${Math.round(d.uv_index_max[i]??0)}</div></div>
+      <div class="t">${showCnAnnotations()?`${T('lunarPrefix')}${T('lunarSep')}${li.monthCN}${li.dayCN} · `:''}${T('precipProb')} ${d.precipitation_probability_max[i]??0}% · ${T('uv')} ${Math.round(d.uv_index_max[i]??0)}</div></div>
       <div class="tt">${Math.round(d.temperature_2m_max[i])}°<small> / ${Math.round(d.temperature_2m_min[i])}°</small></div></div>`; }
   html+='<div class="fc">';
   /* 过去三天的实况，拼在预报前面 */
@@ -251,7 +251,8 @@ function renderWx(){
     const dt=new Date(x.date+'T00:00:00Z');
     const y=dt.getUTCFullYear(),m=dt.getUTCMonth()+1,dd=dt.getUTCDate();
     const inf=dayInfo(y,m,dd,holidayRegion());
-    const fes=inf.festivals[0]||inf.terms[0]||inf.intl[0]||'';
+    /* 非中文界面不显示农历节日与节气，理由见 showCnAnnotations() */
+    const fes=showCnAnnotations()?(inf.festivals[0]||inf.terms[0]||inf.intl[0]||''):(inf.intl[0]||'');
     const l=Math.round(x.lo), hh=Math.round(x.hi);
     const left=((x.lo-lo)/span)*100, wdt=Math.max(((x.hi-x.lo)/span)*100,6);
     const days=Math.round((Date.now()-Date.parse(x.date+'T12:00:00Z'))/864e5);
@@ -269,7 +270,8 @@ function renderWx(){
     const y=dt.getUTCFullYear(),m=dt.getUTCMonth()+1,dd=dt.getUTCDate();
     const inf=dayInfo(y,m,dd,holidayRegion());
     const nm=i===0?T('today'):i===1?T('tomorrow'):i===2?T('dayAfter'):`${m}/${dd}`;
-    const fes=inf.festivals[0]||inf.terms[0]||inf.intl[0]||'';
+    /* 非中文界面不显示农历节日与节气，理由见 showCnAnnotations() */
+    const fes=showCnAnnotations()?(inf.festivals[0]||inf.terms[0]||inf.intl[0]||''):(inf.intl[0]||'');
     const vLo=d.temperature_2m_min[i], vHi=d.temperature_2m_max[i];
     const ok=vLo!=null&&vHi!=null&&isFinite(vLo)&&isFinite(vHi);
     const l=ok?Math.round(vLo):'—', h=ok?Math.round(vHi):'—';
@@ -1176,6 +1178,13 @@ function initLang(){
 /* 当前生效的历法 id。'auto' 时按「地点优先、语言兜底」推断，
    详见 25-calendars.js 的 resolveCalendar。 */
 function curCalendar(){ return resolveCalendar(S.calendar, S.lang, S.cur); }
+/* 预报列表里要不要显示农历、节气、中国节日？
+   只在中文界面显示。理由：这些是不翻译的专有名词（七夕节、处暑），
+   夹在一列英文里既看不懂也很碎。
+   主日期区不受这条限制 —— 那里信息密度低，一行农历是有价值的补充，
+   所以它仍然按「地点优先、语言兜底」的规则走（见 resolveCalendar）。 */
+function showCnAnnotations(){ return String(S.lang||'').startsWith('zh'); }
+
 /* 取某日在当前历法下的表示，供日历格子与详情复用 */
 function altOf(y,m,d){
   const cal = curCalendar();

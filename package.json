@@ -5,13 +5,13 @@
   "type": "module",
   "license": "MIT",
   "author": "Estel",
-  "homepage": "https://github.com/penelopexu123/meridian",
+  "homepage": "https://github.com/penelopexu/meridian",
   "repository": {
     "type": "git",
-    "url": "https://github.com/penelopexu123/meridian.git"
+    "url": "https://github.com/penelopexu/meridian.git"
   },
   "bugs": {
-    "url": "https://github.com/penelopexu123/meridian/issues"
+    "url": "https://github.com/penelopexu/meridian/issues"
   },
   "keywords": [
     "calendar",

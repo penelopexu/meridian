@@ -24,7 +24,7 @@ const shell   = read(join(SRC,'index.html'));
 /* 产物顶部的法务横幅：OFL 第 2 条要求「每一份拷贝」都带版权声明，
    单文件版会被到处转发，所以必须内嵌，不能只靠仓库里的 NOTICE 文件。 */
 const LEGAL_BANNER = `<!--
-  天时 Meridian — https://github.com/penelopexu123/meridian
+  天时 Meridian — https://github.com/penelopexu/meridian
   Source code: MIT License, Copyright (c) 2026 Estel
 
   This file embeds a subset of Plus Jakarta Sans:

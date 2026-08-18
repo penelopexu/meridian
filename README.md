@@ -5,12 +5,12 @@
 **万年历 + 全球天气 + 历史气候**
 不用注册，不用 API Key，不收集任何数据
 
-[![CI](https://github.com/penelopexu123/meridian/actions/workflows/ci.yml/badge.svg)](https://github.com/penelopexu123/meridian/actions/workflows/ci.yml)
+[![CI](https://github.com/penelopexu/meridian/actions/workflows/ci.yml/badge.svg)](https://github.com/penelopexu/meridian/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![零依赖](https://img.shields.io/badge/依赖-0-brightgreen.svg)](package.json)
 [![语言](https://img.shields.io/badge/语言-9-orange.svg)](src/js/10-i18n.js)
 
-[English](README.en.md) · [在线使用](https://penelopexu123.github.io/meridian/) · [下载单文件版](https://github.com/penelopexu123/meridian/releases/latest)
+[English](README.en.md) · [在线使用](https://penelopexu.github.io/meridian/) · [下载单文件版](https://github.com/penelopexu/meridian/releases/latest)
 
 </div>
 
@@ -48,20 +48,20 @@
 
 ### 单文件版（最省事）
 
-从 [Releases](https://github.com/penelopexu123/meridian/releases/latest) 下载 `天时-单文件-带图标.html`，双击用浏览器打开。
+从 [Releases](https://github.com/penelopexu/meridian/releases/latest) 下载 `天时-单文件-带图标.html`，双击用浏览器打开。
 
 一个 400 KB 的文件，字体、样式、脚本、144 座城市离线库、2885 条中国区县映射、1900–2100 农历表全部内嵌。拷到 U 盘能用，发给朋友能用。日历、农历、节气、节假日、阴阳历互转**完全不需要联网**，只有天气要上网。
 
 ### PWA 版（可安装到桌面/手机）
 
-访问 <https://penelopexu123.github.io/meridian/>，浏览器地址栏会出现「安装」图标。装完像原生应用一样有独立窗口和图标，且离线可用。
+访问 <https://penelopexu.github.io/meridian/>，浏览器地址栏会出现「安装」图标。装完像原生应用一样有独立窗口和图标，且离线可用。
 
 > 部署到自己的域名？见 [docs/域名与部署.md](docs/域名与部署.md)
 
 ## 本地开发
 
 ```bash
-git clone https://github.com/penelopexu123/meridian.git
+git clone https://github.com/penelopexu/meridian.git
 cd meridian
 node build.mjs        # 构建，无需 npm install
 npm test              # 全部测试（582 项）
@@ -129,7 +129,7 @@ build.mjs             构建脚本（产出单文件 ×2 + PWA 目录）
 
 凡是能与公开历书核对的锚点（1954 年春节 2 月 3 日、2027 年春节 2 月 6 日、1987 年闰六月），**本引擎均与历书一致而 ICU 不一致**。但我没能写出独立可信的天文仲裁程序来最终裁定其余分歧，所以这里如实标注为未决。
 
-完整差异清单在 [`docs/lunar-vs-icu.tsv`](docs/lunar-vs-icu.tsv)。**懂历法的朋友非常欢迎来看** → [提 issue](https://github.com/penelopexu123/meridian/issues/new?template=lunar-discrepancy.yml)
+完整差异清单在 [`docs/lunar-vs-icu.tsv`](docs/lunar-vs-icu.tsv)。**懂历法的朋友非常欢迎来看** → [提 issue](https://github.com/penelopexu/meridian/issues/new?template=lunar-discrepancy.yml)
 
 ## 体感温度与穿衣建议是怎么算的
 

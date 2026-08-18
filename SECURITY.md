@@ -35,7 +35,7 @@ SW 只缓存同源资源，天气接口一律 network-only。`activate` 时只�
 
 如果你发现了安全问题，**请不要开公开 issue**。
 
-请发邮件到：**penelopexu123@gmail.com**
+请发邮件到：**penelopexu@gmail.com**
 
 请包含：
 - 问题描述与影响
@@ -60,6 +60,6 @@ Tianshi is a **fully static frontend**: no server, no database, no accounts. All
 2. **Strings from the weather API** (city and country names, ultimately from GeoNames) reach `innerHTML`. They are escaped twice: once centrally in `geoSearch()`, and again at render time as defence in depth against stale unescaped values in `localStorage`. Report any path that bypasses both.
 3. **Service Worker** caches same-origin assets only; weather endpoints are network-only; cache cleanup is scoped to the `meridian-` prefix (plus the legacy `tianshi-` one).
 
-**Reporting:** please do **not** open a public issue. Email **penelopexu123@gmail.com** with a description, reproduction steps and your assessment of severity. You'll get a reply within 7 days, and credit in the CHANGELOG once fixed (unless you prefer to stay anonymous).
+**Reporting:** please do **not** open a public issue. Email **penelopexu@gmail.com** with a description, reproduction steps and your assessment of severity. You'll get a reply within 7 days, and credit in the CHANGELOG once fixed (unless you prefer to stay anonymous).
 
 **Supported versions:** latest release only. Please confirm the issue still exists on the latest build.

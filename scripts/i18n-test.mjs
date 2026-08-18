@@ -209,4 +209,18 @@ t.eq("en T('feelsLike')", A.T('feelsLike'), 'Feels like');
 t.ok("en 配色文案已本地化（原先漏译回落中文）", A.T('palGolden') === 'Golden hour', A.T('palGolden'));
 A.setLang('zh-CN');
 
+
+/* ---------- 预报区不该出现中文专有名词 ---------- */
+t.section('非中文界面的中文残留');
+{
+  const before = A.S.lang;
+  t.ok('中文界面显示农历与节气', (() => { A.S.lang = 'zh-CN'; return A.showCnAnnotations() === true; })());
+  for (const l of (A.LOCALES || []).filter(x => !x.startsWith('zh'))) {
+    A.S.lang = l;
+    t.ok(`${l} 界面不显示农历与节气`, A.showCnAnnotations() === false);
+  }
+  t.ok('繁体中文也显示', (() => { A.S.lang = 'zh-TW'; return A.showCnAnnotations() === true; })());
+  A.S.lang = before;
+}
+
 process.exit(t.done() ? 1 : 0);

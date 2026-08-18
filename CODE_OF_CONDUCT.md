@@ -31,7 +31,7 @@
 
 ## 执行
 
-违反准则的行为可以邮件报告给维护者：**penelopexu123@gmail.com**
+违反准则的行为可以邮件报告给维护者：**penelopexu@gmail.com**
 
 维护者会视情节采取：提醒 → 警告 → 临时封禁 → 永久封禁。
 
@@ -49,4 +49,4 @@
 
 **On geography and politics:** this project covers holidays and calendars across many countries. Holiday data follows **official government publications**; place names follow the upstream data source (GeoNames via Open-Meteo). Neither is a political statement. Please do not start political arguments in issues or PRs.
 
-**Enforcement:** report to **penelopexu123@gmail.com**. Responses escalate from a reminder to a permanent ban. Maintainers are bound by this document too.
+**Enforcement:** report to **penelopexu@gmail.com**. Responses escalate from a reminder to a permanent ban. Maintainers are bound by this document too.

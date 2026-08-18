@@ -11,7 +11,7 @@
 ### 快速开始
 
 ```bash
-git clone https://github.com/penelopexu123/meridian.git
+git clone https://github.com/penelopexu/meridian.git
 cd meridian
 node build.mjs        # 构建，无需 npm install
 npm test              # 跑全部测试
@@ -115,7 +115,7 @@ Contributions welcome. This project is deliberately simple: **zero dependencies,
 ### Quick start
 
 ```bash
-git clone https://github.com/penelopexu123/meridian.git
+git clone https://github.com/penelopexu/meridian.git
 cd meridian
 node build.mjs        # build; no npm install needed
 npm test              # run all tests

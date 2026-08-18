@@ -22,7 +22,7 @@
 git add -A
 git commit -m "天时：万年历 + 天气 + 历史气候"
 git branch -M main
-git remote add origin https://github.com/penelopexu123/meridian.git
+git remote add origin https://github.com/penelopexu/meridian.git
 git push -u origin main
 ```
 
@@ -40,7 +40,7 @@ git push -u origin main
 回到仓库的 **Actions** 标签页，能看到一个正在跑的绿色流程。跑完后网址是：
 
 ```
-https://penelopexu123.github.io/meridian/
+https://penelopexu.github.io/meridian/
 ```
 
 手机浏览器打开这个地址，菜单里选「添加到主屏幕」，就装成 App 了。

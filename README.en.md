@@ -5,12 +5,12 @@
 **Perpetual calendar + global weather + historical climate**
 No signup, no API key, no data collection
 
-[![CI](https://github.com/penelopexu123/meridian/actions/workflows/ci.yml/badge.svg)](https://github.com/penelopexu123/meridian/actions/workflows/ci.yml)
+[![CI](https://github.com/penelopexu/meridian/actions/workflows/ci.yml/badge.svg)](https://github.com/penelopexu/meridian/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 [![Languages](https://img.shields.io/badge/languages-9-orange.svg)](src/js/10-i18n.js)
 
-[中文](README.md) · [Live demo](https://penelopexu123.github.io/meridian/) · [Download single file](https://github.com/penelopexu123/meridian/releases/latest)
+[中文](README.md) · [Live demo](https://penelopexu.github.io/meridian/) · [Download single file](https://github.com/penelopexu/meridian/releases/latest)
 
 </div>
 
@@ -36,20 +36,20 @@ No signup, no API key, no data collection
 
 ### Single file
 
-Download `天时-单文件-带图标.html` from [Releases](https://github.com/penelopexu123/meridian/releases/latest) and open it in a browser.
+Download `天时-单文件-带图标.html` from [Releases](https://github.com/penelopexu/meridian/releases/latest) and open it in a browser.
 
 One 400 KB file with fonts, styles, scripts, a 144-city offline database, 2,885 Chinese county→prefecture mappings and the full 1900–2100 lunar table all inlined. Works from a USB stick. The calendar, lunar dates, solar terms, holidays and date conversion need **no network at all** — only weather does.
 
 ### PWA
 
-Visit <https://penelopexu123.github.io/meridian/> and use your browser's *Install* button. It then behaves like a native app, with its own window and icon, and works offline.
+Visit <https://penelopexu.github.io/meridian/> and use your browser's *Install* button. It then behaves like a native app, with its own window and icon, and works offline.
 
 > Deploying to your own domain? See [docs/域名与部署.md](docs/域名与部署.md) (Chinese).
 
 ## Local development
 
 ```bash
-git clone https://github.com/penelopexu123/meridian.git
+git clone https://github.com/penelopexu/meridian.git
 cd meridian
 node build.mjs        # build; no npm install needed
 npm test              # 582 assertions
@@ -111,7 +111,7 @@ Across ~72,000 days from 1901 to 2099, this project's lunar engine disagrees wit
 
 At every anchor that can be checked against published almanacs — Chinese New Year 1954 (Feb 3), 2027 (Feb 6), the 1987 leap month — **this engine agrees with the almanac and ICU does not**. However, I was unable to write a trustworthy independent astronomical arbiter to settle the remaining differences, so this is recorded honestly as unresolved rather than claimed as a win.
 
-The full list is in [`docs/lunar-vs-icu.tsv`](docs/lunar-vs-icu.tsv). **Calendrical expertise is very welcome here** → [open an issue](https://github.com/penelopexu123/meridian/issues/new?template=lunar-discrepancy.yml)
+The full list is in [`docs/lunar-vs-icu.tsv`](docs/lunar-vs-icu.tsv). **Calendrical expertise is very welcome here** → [open an issue](https://github.com/penelopexu/meridian/issues/new?template=lunar-discrepancy.yml)
 
 ## How apparent temperature and clothing advice are computed
 
